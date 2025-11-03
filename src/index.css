@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+/* 🟣 Define your own color variables */
+:root {
+  --bg: #0A0A0A;            /* Background color */
+  --primary: #EAB308;       /* Golden accent */
+  --secondary: #6D28D9;     /* Deep purple */
+  --text: #F9FAFB;          /* Light text */
+  --ui-font: 'Inter', sans-serif;
+}
+
+/* 🧱 Apply basic Tailwind utilities + custom variables */
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--ui-font);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  @apply antialiased;
+}
+
+/* 🧩 Headings (Premium style) */
+.h1-style {
+  font-family: 'Playfair Display', serif;
+  font-size: 48px;
+  line-height: 1.05;
+  color: var(--text);
+}
+
+/* 🔘 CTA Button */
+.btn-cta {
+  text-transform: uppercase;
+  font-size: 16px;
+  padding: 1rem 2.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  background: linear-gradient(90deg, var(--secondary) 0%, #4C1D95 100%);
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.btn-cta:hover {
+  opacity: 0.9;
+  transform: scale(1.03);
+}
+
+/* 💎 Glassy card effect */
+.card-glass {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
