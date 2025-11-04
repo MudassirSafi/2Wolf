@@ -1,7 +1,7 @@
-// ✅ src/components/Navbar.jsx
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import SearchOverlay from "./SearchOverlay"; // ✅ Import here
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext) || {};
@@ -10,11 +10,25 @@ export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
+  const accountRef = useRef(null);
 
+  // ✅ Scroll shadow
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
+    const onScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // ✅ Close account dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (accountRef.current && !accountRef.current.contains(e.target)) {
+        setIsAccountOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogout = () => {
@@ -22,8 +36,6 @@ export default function Navbar() {
     localStorage.clear();
     navigate("/");
   };
-
-  const cartCount = 3; // demo
 
   return (
     <>
@@ -70,23 +82,15 @@ export default function Navbar() {
 
           {/* Desktop Links */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="text-white hover:text-[#EAB308]">
-              Home
-            </Link>
-            <Link to="/shop" className="text-white hover:text-[#EAB308]">
-              Shop
-            </Link>
-            <Link to="/about" className="text-white hover:text-[#EAB308]">
-              About
-            </Link>
-            <Link to="/contact" className="text-white hover:text-[#EAB308]">
-              Contact
-            </Link>
+            <Link to="/" className="text-white hover:text-[#EAB308]">Home</Link>
+            <Link to="/shop" className="text-white hover:text-[#EAB308]">Shop</Link>
+            <Link to="/about" className="text-white hover:text-[#EAB308]">About</Link>
+            <Link to="/contact" className="text-white hover:text-[#EAB308]">Contact</Link>
           </div>
 
           {/* Right Side Icons */}
           <div className="flex items-center space-x-6">
-            {/* Search */}
+            {/* Search Button */}
             <button
               onClick={() => setIsSearchOpen(true)}
               className="p-2 rounded-md hover:scale-110 transition"
@@ -102,147 +106,63 @@ export default function Navbar() {
                   strokeWidth="1.6"
                   strokeLinecap="round"
                 />
-                <circle
-                  cx="11"
-                  cy="11"
-                  r="6"
-                  stroke="#EAB308"
-                  strokeWidth="1.6"
-                />
+                <circle cx="11" cy="11" r="6" stroke="#EAB308" strokeWidth="1.6" />
               </svg>
             </button>
 
-            {/* Account / Dashboard */}
-            {!user ? (
-              <Link
-                to="/signin"
-                className="p-2 rounded-md hover:scale-110 transition-transform"
-              >
-                <svg
-                  className="w-6 h-6 text-[#EAB308]"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                >
-                  <path
-                    d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"
-                    stroke="#EAB308"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                  />
-                  <path
-                    d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
-                    stroke="#EAB308"
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </Link>
-            ) : (
-              <>
-                {user.role === "admin" ? (
-                  <Link
-                    to="/dashboard"
-                    className="p-2 rounded-md hover:scale-110 transition-transform"
-                  >
-                    <svg
-                      className="w-6 h-6 text-[#EAB308]"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <path
-                        d="M3 13h8V3H3v10zM13 21h8V11h-8v10z"
-                        stroke="#EAB308"
-                        strokeWidth="1.4"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </Link>
-                ) : (
-                  <Link
-                    to="/my-account"
-                    className="p-2 rounded-md hover:scale-110 transition-transform"
-                  >
-                    <svg
-                      className="w-6 h-6 text-[#EAB308]"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <path
-                        d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"
-                        stroke="#EAB308"
-                        strokeWidth="1.6"
-                        strokeLinecap="round"
-                      />
-                      <path
-                        d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
-                        stroke="#EAB308"
-                        strokeWidth="1.6"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </Link>
-                )}
-                <button
-                  onClick={handleLogout}
+            {/* Account Dropdown */}
+            <div className="relative" ref={accountRef}>
+              {!user ? (
+                <Link
+                  to="/signin"
                   className="p-2 rounded-md hover:scale-110 transition-transform"
                 >
-                  <svg
-                    className="w-6 h-6 text-[#EAB308]"
-                    viewBox="0 0 24 24"
-                    fill="none"
+                  <i className="fa-solid fa-user text-[#EAB308] text-xl"></i>
+                </Link>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setIsAccountOpen(!isAccountOpen)}
+                    className="p-2 rounded-md hover:scale-110 transition-transform"
                   >
-                    <path
-                      d="M16 17l5-5-5-5"
-                      stroke="#EAB308"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M21 12H9"
-                      stroke="#EAB308"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                    />
-                    <path
-                      d="M13 19H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h7"
-                      stroke="#EAB308"
-                      strokeWidth="1.6"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </button>
-              </>
-            )}
+                    <i className="fa-solid fa-user text-[#EAB308] text-xl"></i>
+                  </button>
 
-            {/* Cart */}
-            <div className="relative">
-              <Link
-                to="/cart"
-                className="p-2 rounded-md hover:scale-110 transition-transform"
-              >
-                <svg
-                  className="w-6 h-6 text-[#EAB308]"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                >
-                  <path
-                    d="M6 6h15l-1.5 9H8L6 6z"
-                    stroke="#EAB308"
-                    strokeWidth="1.4"
-                    strokeLinecap="round"
-                  />
-                  <circle cx="10" cy="20" r="1" fill="#EAB308" />
-                  <circle cx="18" cy="20" r="1" fill="#EAB308" />
-                </svg>
-              </Link>
-              {cartCount > 0 && (
-                <span className="absolute -top-2 -right-2 text-[12px] font-bold px-1.5 py-0.5 rounded-full bg-[#6D28D9] text-white">
-                  {cartCount}
-                </span>
+                  {isAccountOpen && (
+                    <div className="absolute right-0 mt-2 w-40 bg-[#1A1A1A] border border-white/10 rounded-lg shadow-lg overflow-hidden z-[9999] animate-fadeIn">
+                      {user.role === "admin" ? (
+                        <Link
+                          to="/dashboard"
+                          onClick={() => setIsAccountOpen(false)}
+                          className="block px-4 py-2 text-sm text-white hover:bg-[#EAB308]/10"
+                        >
+                          Dashboard
+                        </Link>
+                      ) : (
+                        <Link
+                          to="/my-account"
+                          onClick={() => setIsAccountOpen(false)}
+                          className="block px-4 py-2 text-sm text-white hover:bg-[#EAB308]/10"
+                        >
+                          My Account
+                        </Link>
+                      )}
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setIsAccountOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-[#EAB308] hover:bg-[#EAB308]/10"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
-            {/* Mobile Menu */}
+            {/* Hamburger (Mobile Only) */}
             <button
               className="md:hidden p-2 ml-2"
               onClick={() => setIsMobileOpen((v) => !v)}
@@ -268,82 +188,34 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Drawer */}
-        <div
-          className={`md:hidden bg-[#0A0A0A]/95 backdrop-blur-md border-t border-white/5 transition-max-height duration-300 overflow-hidden ${
-            isMobileOpen ? "max-h-60" : "max-h-0"
-          }`}
-        >
-          <div className="px-4 pb-4 pt-3 flex flex-col space-y-3">
-            <Link to="/" className="text-white hover:text-[#EAB308]">
-              Home
-            </Link>
-            <Link to="/shop" className="text-white hover:text-[#EAB308]">
-              Shop
-            </Link>
-            <Link to="/about" className="text-white hover:text-[#EAB308]">
-              About
-            </Link>
-            <Link to="/contact" className="text-white hover:text-[#EAB308]">
-              Contact
-            </Link>
-
-            <div className="flex flex-col space-y-2 pt-2">
+        {/* ✅ Mobile Drawer */}
+        {isMobileOpen && (
+          <div className="md:hidden absolute top-20 left-0 w-full bg-[#0A0A0A]/95 backdrop-blur-lg border-t border-white/10 z-[999]">
+            <div className="flex flex-col items-center py-6 space-y-5">
+              <Link to="/" onClick={() => setIsMobileOpen(false)} className="text-white hover:text-[#EAB308]">Home</Link>
+              <Link to="/shop" onClick={() => setIsMobileOpen(false)} className="text-white hover:text-[#EAB308]">Shop</Link>
+              <Link to="/about" onClick={() => setIsMobileOpen(false)} className="text-white hover:text-[#EAB308]">About</Link>
+              <Link to="/contact" onClick={() => setIsMobileOpen(false)} className="text-white hover:text-[#EAB308]">Contact</Link>
               {!user ? (
-                <>
-                  <Link to="/signin" className="text-[#EAB308]">
-                    Sign In
-                  </Link>
-                  <Link to="/signup" className="text-[#EAB308]">
-                    Sign Up
-                  </Link>
-                </>
+                <Link to="/signin" onClick={() => setIsMobileOpen(false)} className="text-white hover:text-[#EAB308]">Sign In</Link>
               ) : (
-                <>
-                  {user.role === "admin" ? (
-                    <Link to="/dashboard" className="text-[#EAB308]">
-                      Dashboard
-                    </Link>
-                  ) : (
-                    <Link to="/my-account" className="text-[#EAB308]">
-                      My Account
-                    </Link>
-                  )}
-                  <button
-                    onClick={handleLogout}
-                    className="text-[#EAB308] text-left"
-                  >
-                    Logout
-                  </button>
-                </>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsMobileOpen(false);
+                  }}
+                  className="text-[#EAB308] hover:text-white"
+                >
+                  Logout
+                </button>
               )}
             </div>
           </div>
-        </div>
+        )}
       </nav>
 
-      {/* Search Overlay */}
-      {isSearchOpen && (
-        <div className="fixed inset-0 z-[1100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-6">
-          <div className="w-full max-w-2xl">
-            <div className="bg-white rounded-xl p-6 shadow-xl">
-              <div className="flex items-center gap-3">
-                <input
-                  autoFocus
-                  placeholder="Search products, categories, keywords..."
-                  className="w-full p-4 rounded-md border outline-none"
-                />
-                <button
-                  onClick={() => setIsSearchOpen(false)}
-                  className="px-4 py-2 rounded-md bg-[#EAB308] text-black font-semibold"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ✅ Search Overlay separate component */}
+      {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} />}
     </>
   );
 }
