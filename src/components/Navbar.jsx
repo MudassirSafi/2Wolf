@@ -40,13 +40,9 @@ export default function Navbar() {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 w-full h-20 z-[1000] transition-all duration-300 ${
-          scrolled
-            ? "bg-[#0A0A0A]/90 backdrop-blur-lg shadow-[0_6px_24px_rgba(0,0,0,0.6)] border-b border-white/5"
-            : "bg-[#0A0A0A]/70 backdrop-blur-md"
-        }`}
-        style={{ paddingLeft: "40px", paddingRight: "40px" }}
-      >
+  className="fixed top-0 left-0 w-full h-20 z-[1000] bg-[#050505] shadow-[0_6px_24px_rgba(0,0,0,0.8)] border-b border-[#111] transition-all duration-300"
+  style={{ paddingLeft: "40px", paddingRight: "40px" }}
+>
         <div className="max-w-[1400px] mx-auto h-full flex items-center justify-between">
           {/* LOGO */}
           <Link to="/" className="flex items-center gap-3">

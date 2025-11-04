@@ -1,3 +1,4 @@
+// ✅ src/pages/Home.jsx
 import React, { useState } from "react";
 import HomeHero from "../components/HomeHero";
 import ProductCard from "../components/ProductCard";
@@ -22,20 +23,24 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-gray-100 via-gray-200 to-gray-300 text-gray-900 font-sans pt-20">
-      <HomeHero />
+    <main className="min-h-screen bg-gradient-to-b from-[#FAF8F5] via-[#F8F5F0] to-[#F3EFEA] text-[#0A0A0A] font-sans pt-20">
+   <HomeHero />
 
-      <section className="container mx-auto py-12 px-4">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-[#B8860B]">New Products</h2>
-          <p className="text-sm text-gray-700">Latest arrivals — curated for you</p>
+      <section className="container mx-auto py-16 px-6">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-2xl font-bold text-[#B8860B] tracking-wide">
+            New Products
+          </h2>
+          <p className="text-sm text-gray-600">
+            Latest arrivals — curated for you
+          </p>
         </div>
 
         <div className="relative">
           {/* ✅ Carousel viewport */}
           <div className="overflow-hidden">
             <motion.div
-              className="flex gap-6"
+              className="flex gap-8"
               initial={false}
               animate={{ x: 0 }}
               transition={{ type: "spring", stiffness: 120 }}
@@ -51,22 +56,22 @@ export default function Home() {
           {/* ✅ Prev / Next buttons */}
           <button
             onClick={prev}
-            className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/40 backdrop-blur-md p-3 rounded-full shadow-lg hover:scale-110 transition"
+            className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/60 backdrop-blur-md p-3 rounded-full shadow-md border border-gray-300 hover:scale-110 hover:border-[#B8860B] hover:shadow-[0_0_10px_#FFD700] transition"
             aria-label="Previous products"
           >
-            <FaChevronLeft />
+            <FaChevronLeft className="text-[#0A0A0A]" />
           </button>
           <button
             onClick={next}
-            className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/40 backdrop-blur-md p-3 rounded-full shadow-lg hover:scale-110 transition"
+            className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/60 backdrop-blur-md p-3 rounded-full shadow-md border border-gray-300 hover:scale-110 hover:border-[#B8860B] hover:shadow-[0_0_10px_#FFD700] transition"
             aria-label="Next products"
           >
-            <FaChevronRight />
+            <FaChevronRight className="text-[#0A0A0A]" />
           </button>
         </div>
 
         {/* ✅ Elegant pager dots */}
-        <div className="flex items-center gap-3 justify-center mt-8">
+        <div className="flex items-center gap-3 justify-center mt-10">
           {sampleProducts.map((_, idx) => {
             const active =
               idx >= startIdx && idx < startIdx + visible

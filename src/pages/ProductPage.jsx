@@ -1,4 +1,3 @@
-// ✅ src/pages/ProductPage.jsx
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import sampleProducts from "../data/sampleProducts";
@@ -30,20 +29,19 @@ export default function ProductPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#2c0050] via-[#0a0a0a] to-[#240040] text-white font-sans">
+    <div className="min-h-screen bg-[#FAF8F5] text-[#0A0A0A] font-sans">
       <div className="container mx-auto py-16 px-4 md:px-8">
-        {/* Back Button */}
-<div className="pt-8"> 
-  <button
-    onClick={() => navigate(-1)}
-    className="mb-10 inline-flex items-center gap-2 bg-white/10 px-4 py-2 rounded-lg hover:bg-white/20 transition shadow-sm backdrop-blur-sm"
-  >
-    <FaChevronLeft className="text-yellow-300" /> Back
-  </button>
-</div>
+        {/* ✅ Back Button */}
+        <div className="pt-8">
+          <button
+            onClick={() => navigate(-1)}
+            className="mb-10 inline-flex items-center gap-2 bg-[#6E2A6E] text-white px-4 py-2 rounded-lg hover:bg-[#5A215A] transition shadow-md"
+          >
+            <FaChevronLeft /> Back
+          </button>
+        </div>
 
-
-        {/* Product Layout */}
+        {/* ✅ Product Layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
           {/* Left: Images */}
           <motion.div
@@ -51,7 +49,7 @@ export default function ProductPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+            <div className="rounded-2xl overflow-hidden shadow-xl border border-gray-200">
               <img
                 src={product.images[active]}
                 alt={`${product.title} image ${active + 1}`}
@@ -59,7 +57,7 @@ export default function ProductPage() {
               />
             </div>
 
-            {/* Thumbnails */}
+            {/* ✅ Thumbnails */}
             <div className="flex gap-3 mt-5 justify-center md:justify-start flex-wrap">
               {product.images.map((img, idx) => (
                 <button
@@ -67,68 +65,73 @@ export default function ProductPage() {
                   onClick={() => setActive(idx)}
                   className={`w-24 h-16 rounded-xl overflow-hidden border transition-transform ${
                     idx === active
-                      ? "border-yellow-400 ring-2 ring-yellow-300 scale-105"
-                      : "border-white/20 hover:border-yellow-200"
+                      ? "border-[#6E2A6E] ring-2 ring-[#C0A060] scale-105"
+                      : "border-gray-300 hover:border-[#6E2A6E]"
                   }`}
                 >
-                  <img src={img} alt={`thumb-${idx}`} className="w-full h-full object-cover" />
+                  <img
+                    src={img}
+                    alt={`thumb-${idx}`}
+                    className="w-full h-full object-cover"
+                  />
                 </button>
               ))}
             </div>
           </motion.div>
 
-          {/* Right: Product Details */}
+          {/* ✅ Right: Product Details */}
           <motion.div
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
             className="space-y-6"
           >
-            <h1 className="text-4xl font-extrabold text-yellow-300 drop-shadow-lg">
+            <h1 className="text-4xl font-extrabold text-[#0A0A0A]">
               {product.title}
             </h1>
 
-            <p className="text-white/80 text-lg leading-relaxed">
+            <p className="text-gray-700 text-lg leading-relaxed">
               {product.description}
             </p>
 
             <div className="flex items-center gap-4 mt-4">
-              <div className="text-3xl font-bold text-yellow-200">${product.price}</div>
+              <div className="text-[32px] font-bold text-[#D4AF37]">
+                ${product.price}
+              </div>
               {product.discount > 0 && (
-                <div className="bg-yellow-300 text-black px-3 py-1 rounded-lg font-semibold text-sm">
+                <div className="bg-[#6E2A6E] text-white px-3 py-1 rounded-lg font-semibold text-sm">
                   {product.discount}% OFF
                 </div>
               )}
             </div>
 
-            {/* Buttons */}
-         <div className="flex gap-4 mt-8">
-         <motion.button
-           whileHover={{ scale: 1.05 }}
-           whileTap={{ scale: 0.95 }}
-           onClick={handleAddToCart}
-           className="bg-purple-600/80 text-white font-semibold px-8 py-3 rounded-full shadow-lg hover:bg-purple-700 transition text-sm sm:text-base inline-flex items-center gap-2"
-          >
-          <FaCartPlus /> Add to Cart
-         </motion.button>
-
+            {/* ✅ Buttons */}
+            <div className="flex gap-4 mt-8">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleAddToCart}
+                className="bg-[#6E2A6E] text-white font-semibold px-8 py-3 rounded-full shadow-lg hover:bg-[#5A215A] transition text-sm sm:text-base inline-flex items-center gap-2"
+              >
+                <FaCartPlus /> Add to Cart
+              </motion.button>
 
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => alert("Buy now flow not implemented")}
-                className="bg-transparent px-7 py-3 rounded-xl border border-white/30 hover:bg-white/10 transition"
+                onClick={() => alert('Buy now flow not implemented')}
+                className="border border-[#0A0A0A] text-[#0A0A0A] px-7 py-3 rounded-xl hover:bg-[#0A0A0A] hover:text-white transition"
               >
                 Buy Now
               </motion.button>
             </div>
 
-            {/* Details List */}
-            <div className="pt-6 border-t border-white/10">
-              <h4 className="text-lg font-semibold text-yellow-200 mb-2">
+            {/* ✅ Details List */}
+            <div className="pt-6 border-t border-gray-300">
+              <h4 className="text-lg font-semibold text-[#0A0A0A] mb-2">
                 Product Details
               </h4>
-              <ul className="list-disc ml-5 text-white/70 space-y-1">
+              <ul className="list-disc ml-5 text-gray-700 space-y-1">
                 <li>Premium handcrafted materials</li>
                 <li>1-Year warranty on every piece</li>
                 <li>Free worldwide shipping over $100</li>
