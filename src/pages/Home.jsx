@@ -23,8 +23,8 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#FAF8F5] via-[#F8F5F0] to-[#F3EFEA] text-[#0A0A0A] font-sans pt-20">
-   <HomeHero />
+    <main className="min-h-screen bg-gradient-to-b from-[#FAF8F5] via-[#F8F5F0] to-[#F3EFEA] text-[#0A0A0A] font-sans pt-5">
+    <HomeHero /> 
 
       <section className="container mx-auto py-16 px-6">
         <div className="flex items-center justify-between mb-8">

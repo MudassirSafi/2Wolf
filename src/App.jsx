@@ -10,24 +10,24 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import MyAccount from "./components/MyAccount";
-import AuthProvider from "./context/AuthContext"; // ✅ default import
+import AuthProvider from "./context/AuthContext";
 
 export default function App() {
   const location = useLocation();
 
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] font-poppins relative">
-        {/* ✅ Fixed Navbar always visible */}
+      <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] font-poppins">
+        {/* ✅ Navbar */}
         <Navbar />
 
         {/* 🧊 Blur background for SignIn / SignUp */}
         {["/signin", "/signup"].includes(location.pathname) && (
-          <div className="absolute inset-0 backdrop-blur-md bg-black/40 z-40"></div>
+          <div className="fixed inset-0 backdrop-blur-md bg-black/40 z-40"></div>
         )}
 
-        {/* ✅ Add padding-top to avoid content going under Navbar */}
-        <main className="relative z-50">
+        {/* ✅ Main Content - NO padding needed for sticky navbar */}
+        <main className="relative z-10 ">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/signin" element={<SignIn />} />
