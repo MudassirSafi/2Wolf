@@ -1,89 +1,150 @@
 // src/components/SignIn.jsx
-import React, { useState, useContext } from 'react'
-import axios from 'axios'
-import { useNavigate, Link } from 'react-router-dom'
-import { AuthContext } from '../context/AuthContext'
-import { FcGoogle } from 'react-icons/fc'
-import { FaApple } from 'react-icons/fa'
+import React, { useState, useContext } from 'react';
+import axios from 'axios';
+import { useNavigate, Link } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
+import { FcGoogle } from 'react-icons/fc';
+import { FaApple } from 'react-icons/fa';
 
-export default function SignIn() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [err, setErr] = useState(null)
-  const nav = useNavigate()
-  const { login } = useContext(AuthContext)
+export default function SignIn({ onClose }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [err, setErr] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const nav = useNavigate();
+  const { login } = useContext(AuthContext);
 
-  const API = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || '' // remove trailing slash
+  const API = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:5000';
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setErr(null)
+    e.preventDefault();
+    setErr(null);
+    setLoading(true);
+
     try {
-      const res = await axios.post(`${API}/api/users/signin`, { email, password })
-      const { token, role } = res.data
-      login(token, role) // AuthContext should save token & role
-      if (role === 'admin') nav('/dashboard')
-      else nav('/my-account')
+      const res = await axios.post(`${API}/api/users/signin`, { 
+        email: email.trim().toLowerCase(), 
+        password 
+      });
+      
+      const { token, role } = res.data;
+      login(token, role);
+      onClose?.();
+      if (role === 'admin') nav('/dashboard');
+      else nav('/my-account');
     } catch (error) {
-      console.error("SignIn error:", error)
-      setErr(error?.response?.data?.message || error.message || 'Sign in failed')
+      setErr(error?.response?.data?.message || 'Sign in failed');
+    } finally {
+      setLoading(false);
     }
-  }
+  };
+
+  const handleGoogle = () => {
+    window.location.href = `${API}/api/auth/google`;
+  };
+
+  const handleApple = () => {
+    window.location.href = `${API}/api/auth/apple`;
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xl bg-black/40">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-md bg-white/10 backdrop-blur-2xl border border-white/20 p-8 rounded-2xl shadow-2xl text-white font-poppins"
-      >
-        <h3 className="text-3xl font-semibold mb-6 text-center text-yellow-400">Sign In</h3>
-        {err && <div className="text-red-400 text-center mb-3">{err}</div>}
+    <>
+      {/* BLUR BACKGROUND - z-40, but RENDERED FIRST */}
+      <div 
+        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-md"
+        onClick={onClose}
+      />
 
-        <label className="block mb-4">
-          <span className="text-sm text-gray-300">Email</span>
+      {/* MODAL - z-50, HIGHER THAN BACKDROP */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+        <form
+          onSubmit={handleSubmit}
+          className="w-full max-w-md bg-white/95 backdrop-blur-xl border border-white/40 p-10 rounded-3xl shadow-2xl text-gray-900 relative pointer-events-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close Button */}
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-3xl font-light z-10"
+          >
+            ×
+          </button>
+
+          <h3 className="text-4xl font-bold mb-8 text-center bg-gradient-to-r from-yellow-500 to-amber-600 bg-clip-text text-transparent">
+            Welcome Back
+          </h3>
+
+          {err && (
+            <div className="bg-red-100 text-red-700 px-4 py-3 rounded-lg text-center mb-6">
+              {err}
+            </div>
+          )}
+
           <input
+            type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
+            placeholder="Email address"
             required
-            type="email"
-            className="w-full mt-1 p-3 rounded-lg bg-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            disabled={loading}
+            className="w-full mb-5 px-5 py-4 bg-white/70 border border-gray-300 rounded-xl placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-yellow-400/50 focus:bg-white transition disabled:opacity-50"
           />
-        </label>
 
-        <label className="block mb-6">
-          <span className="text-sm text-gray-300">Password</span>
           <input
+            type="password"
             value={password}
             onChange={e => setPassword(e.target.value)}
+            placeholder="Password"
             required
-            type="password"
-            className="w-full mt-1 p-3 rounded-lg bg-white/20 text-white placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            disabled={loading}
+            className="w-full mb-8 px-5 py-4 bg-white/70 border border-gray-300 rounded-xl placeholder-gray-500 focus:outline-none focus:ring-4 focus:ring-yellow-400/50 focus:bg-white transition disabled:opacity-50"
           />
-        </label>
 
-        <button
-          type="submit"
-          className="w-full py-3 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 transition"
-        >
-          Sign In
-        </button>
-
-        <div className="flex justify-center space-x-6 mt-6">
-          <button className="p-3 bg-white/10 rounded-full hover:bg-white/20 transition">
-            <FcGoogle className="w-6 h-6" />
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-bold rounded-xl shadow-lg hover:shadow-yellow-500/50 transition transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Signing In...' : 'Sign In'}
           </button>
-          <button className="p-3 bg-white/10 rounded-full hover:bg-white/20 transition">
-            <FaApple className="w-6 h-6 text-white" />
-          </button>
-        </div>
 
-        <div className="text-center text-sm mt-6 text-gray-300">
-          New to 2Wolf?{" "}
-          <Link to="/signup" className="text-yellow-400 hover:underline">
-            Create an account
-          </Link>
-        </div>
-      </form>
-    </div>
-  )
+          {/* GOOGLE & APPLE BUTTONS - NOW CLICKABLE */}
+          <div className="flex justify-center gap-8 my-8">
+            <button 
+              type="button" 
+              onClick={handleGoogle}
+              disabled={loading}
+              className="p-5 bg-black/10 backdrop-blur-md rounded-full hover:bg-black/20 transition-all hover:scale-110 shadow-lg disabled:opacity-50"
+            >
+              <FcGoogle className="w-8 h-8" />
+            </button>
+            <button 
+              type="button" 
+              onClick={handleApple}
+              disabled={loading}
+              className="p-5 bg-black/10 backdrop-blur-md rounded-full hover:bg-black/20 transition-all hover:scale-110 shadow-lg disabled:opacity-50"
+            >
+              <FaApple className="w-8 h-8" />
+            </button>
+          </div>
+
+          <p className="text-center text-gray-700">
+            New here?{" "}
+            <Link 
+              to="/signup" 
+              onClick={(e) => { 
+                e.preventDefault(); 
+                onClose?.(); 
+                nav('/signup'); 
+              }} 
+              className="text-yellow-600 font-bold hover:underline"
+            >
+              Create account
+            </Link>
+          </p>
+        </form>
+      </div>
+    </>
+  );
 }

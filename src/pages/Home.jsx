@@ -53,21 +53,31 @@ export default function Home() {
             </motion.div>
           </div>
 
-          {/* ✅ Prev / Next buttons */}
-          <button
-            onClick={prev}
-            className="absolute left-0 top-1/2 -translate-y-1/2 bg-white/60 backdrop-blur-md p-3 rounded-full shadow-md border border-gray-300 hover:scale-110 hover:border-[#B8860B] hover:shadow-[0_0_10px_#FFD700] transition"
-            aria-label="Previous products"
-          >
-            <FaChevronLeft className="text-[#0A0A0A]" />
-          </button>
-          <button
-            onClick={next}
-            className="absolute right-0 top-1/2 -translate-y-1/2 bg-white/60 backdrop-blur-md p-3 rounded-full shadow-md border border-gray-300 hover:scale-110 hover:border-[#B8860B] hover:shadow-[0_0_10px_#FFD700] transition"
-            aria-label="Next products"
-          >
-            <FaChevronRight className="text-[#0A0A0A]" />
-          </button>
+          {/* PREV BUTTON — SHARP */}
+<button
+  onClick={prev}
+  className="absolute left-4 top-1/2 -translate-y-1/2 
+             bg-white/95 backdrop-blur-sm 
+             p-4 rounded-full shadow-2xl border-2 border-gray-200 
+             hover:bg-white hover:shadow-amber-400/50 
+             hover:scale-110 hover:border-amber-500 
+             transition-all duration-300 z-10"
+>
+  <FaChevronLeft className="text-gray-800 text-xl" />
+</button>
+
+{/* NEXT BUTTON — SHARP */}
+<button
+  onClick={next}
+  className="absolute right-4 top-1/2 -translate-y-1/2 
+             bg-white/95 backdrop-blur-sm 
+             p-4 rounded-full shadow-2xl border-2 border-gray-200 
+             hover:bg-white hover:shadow-amber-400/50 
+             hover:scale-110 hover:border-amber-500 
+             transition-all duration-300 z-10"
+>
+  <FaChevronRight className="text-gray-800 text-xl" />
+</button>
         </div>
 
         {/* ✅ Elegant pager dots */}
