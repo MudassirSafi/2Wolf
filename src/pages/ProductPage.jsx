@@ -1,117 +1,142 @@
-import React, { useEffect, useState } from "react";
+// src/pages/ProductPage.jsx
+import React, { useEffect, useState, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import sampleProducts from "../data/sampleProducts";
+import { CartContext } from "../context/CartContext";
+import { AuthContext } from "../context/AuthContext";
 import { FaChevronLeft, FaCartPlus } from "react-icons/fa";
 import { motion } from "framer-motion";
 
 export default function ProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const product = sampleProducts.find((p) => String(p.id) === String(id));
+  const { addToCart } = useContext(CartContext);
+  const { user } = useContext(AuthContext);
+
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [active, setActive] = useState(0);
-  const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
-    if (!product) navigate("/");
-    const cart = JSON.parse(localStorage.getItem("muhi_cart") || "[]");
-    setCartCount(cart.length);
-  }, [product, navigate]);
+    const fetchProduct = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/products/${id}`);
+        const data = await res.json();
 
-  if (!product) return null;
+        // ✅ YEH SABSE BADI FIX HAI
+        if (data.product) {
+          setProduct(data.product);
+        } else {
+          // Agar product nahi mila ya error aaya
+          setError(data.message || "Product not found");
+          setProduct(null);
+        }
+      } catch (err) {
+        console.error("Fetch error:", err);
+        setError("Failed to load product");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) fetchProduct();
+  }, [id]);
 
   const handleAddToCart = () => {
-    const cart = JSON.parse(localStorage.getItem("muhi_cart") || "[]");
-    cart.push({ ...product, qty: 1 });
-    localStorage.setItem("muhi_cart", JSON.stringify(cart));
-    setCartCount(cart.length);
-    window.dispatchEvent(new Event("cartUpdated"));
-    alert(`${product.title} added to cart`);
+    if (!user) {
+      alert("Please sign in to add items to cart");
+      navigate("/signin");
+      return;
+    }
+    addToCart(product, 1);
+    alert(`${product.name} added to cart!`);
   };
 
+  // Loading
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center">
+        <div className="text-2xl text-gray-600">Loading product...</div>
+      </div>
+    );
+  }
+
+  // Error ya product nahi mila
+  if (error || !product) {
+    return (
+      <div className="min-h-screen bg-[#FAF8F5] flex flex-col items-center justify-center p-6">
+        <h1 className="text-4xl font-bold text-red-600 mb-4">Product Not Found</h1>
+        <p className="text-gray-600 mb-8">{error || "The product you're looking for doesn't exist."}</p>
+        <button
+          onClick={() => navigate("/")}
+          className="bg-[#6E2A6E] text-white px-8 py-3 rounded-full hover:bg-[#5A215A] transition"
+        >
+          Back to Home
+        </button>
+      </div>
+    );
+  }
+
+  // Success - Product mil gaya
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-[#0A0A0A] font-sans">
       <div className="container mx-auto py-16 px-4 md:px-8">
-        {/* ✅ Back Button */}
-        <div className="pt-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="mb-10 inline-flex items-center gap-2 bg-[#6E2A6E] text-white px-4 py-2 rounded-lg hover:bg-[#5A215A] transition shadow-md"
-          >
-            <FaChevronLeft /> Back
-          </button>
-        </div>
+        <button
+          onClick={() => navigate(-1)}
+          className="mb-10 inline-flex items-center gap-2 bg-[#6E2A6E] text-white px-4 py-2 rounded-lg hover:bg-[#5A215A] transition shadow-md"
+        >
+          <FaChevronLeft /> Back
+        </button>
 
-        {/* ✅ Product Layout */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
-          {/* Left: Images */}
-          <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          {/* Images */}
+          <motion.div initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }}>
             <div className="rounded-2xl overflow-hidden shadow-xl border border-gray-200">
               <img
-                src={product.images[active]}
-                alt={`${product.title} image ${active + 1}`}
+                src={product.images?.[active] || "https://via.placeholder.com/600"}
+                alt={product.name}
                 className="w-full h-[450px] object-cover"
               />
             </div>
-
-            {/* ✅ Thumbnails */}
             <div className="flex gap-3 mt-5 justify-center md:justify-start flex-wrap">
-              {product.images.map((img, idx) => (
+              {product.images?.map((img, idx) => (
                 <button
                   key={idx}
                   onClick={() => setActive(idx)}
-                  className={`w-24 h-16 rounded-xl overflow-hidden border transition-transform ${
+                  className={`w-24 h-16 rounded-xl overflow-hidden border-2 transition-all ${
                     idx === active
-                      ? "border-[#6E2A6E] ring-2 ring-[#C0A060] scale-105"
+                      ? "border-[#6E2A6E] ring-4 ring-[#D4AF37]/30 scale-105"
                       : "border-gray-300 hover:border-[#6E2A6E]"
                   }`}
                 >
-                  <img
-                    src={img}
-                    alt={`thumb-${idx}`}
-                    className="w-full h-full object-cover"
-                  />
+                  <img src={img} alt="" className="w-full h-full object-cover" />
                 </button>
               ))}
             </div>
           </motion.div>
 
-          {/* ✅ Right: Product Details */}
-          <motion.div
-            initial={{ opacity: 0, x: 40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.6 }}
-            className="space-y-6"
-          >
-            <h1 className="text-4xl font-extrabold text-[#0A0A0A]">
-              {product.title}
-            </h1>
+          {/* Details */}
+          <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+            <h1 className="text-4xl font-extrabold text-[#0A0A0A]">{product.name}</h1>
+            <p className="text-gray-700 text-lg leading-relaxed">{product.description || "No description available."}</p>
 
-            <p className="text-gray-700 text-lg leading-relaxed">
-              {product.description}
-            </p>
-
-            <div className="flex items-center gap-4 mt-4">
+            <div className="flex items-center gap-4">
               <div className="text-[32px] font-bold text-[#D4AF37]">
-                ${product.price}
+                ${Number(product.price).toFixed(2)}
               </div>
               {product.discount > 0 && (
-                <div className="bg-[#6E2A6E] text-white px-3 py-1 rounded-lg font-semibold text-sm">
-                  {product.discount}% OFF
+                <div className="bg-red-600 text-white px-4 py-1 rounded-lg font-bold text-lg">
+                  -{product.discount}%
                 </div>
               )}
             </div>
 
-            {/* ✅ Buttons */}
             <div className="flex gap-4 mt-8">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleAddToCart}
-                className="bg-[#6E2A6E] text-white font-semibold px-8 py-3 rounded-full shadow-lg hover:bg-[#5A215A] transition text-sm sm:text-base inline-flex items-center gap-2"
+                className="bg-[#6E2A6E] text-white font-semibold px-8 py-3 rounded-full shadow-lg hover:bg-[#5A215A] transition flex items-center gap-2"
               >
                 <FaCartPlus /> Add to Cart
               </motion.button>
@@ -119,24 +144,11 @@ export default function ProductPage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => alert('Buy now flow not implemented')}
-                className="border border-[#0A0A0A] text-[#0A0A0A] px-7 py-3 rounded-xl hover:bg-[#0A0A0A] hover:text-white transition"
+                onClick={handleAddToCart}
+                className="border-2 border-[#6E2A6E] text-[#6E2A6E] px-7 py-3 rounded-xl hover:bg-[#6E2A6E] hover:text-white transition font-semibold"
               >
                 Buy Now
               </motion.button>
-            </div>
-
-            {/* ✅ Details List */}
-            <div className="pt-6 border-t border-gray-300">
-              <h4 className="text-lg font-semibold text-[#0A0A0A] mb-2">
-                Product Details
-              </h4>
-              <ul className="list-disc ml-5 text-gray-700 space-y-1">
-                <li>Premium handcrafted materials</li>
-                <li>1-Year warranty on every piece</li>
-                <li>Free worldwide shipping over $100</li>
-                <li>Luxury packaging included</li>
-              </ul>
             </div>
           </motion.div>
         </div>

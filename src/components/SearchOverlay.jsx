@@ -1,98 +1,91 @@
+// src/components/SearchOverlay.jsx
 import React, { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { FaTimes, FaSearch } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { FaTimes } from "react-icons/fa";
 
 export default function SearchOverlay({ onClose }) {
   const [query, setQuery] = useState("");
   const [products, setProducts] = useState([]);
   const [filtered, setFiltered] = useState([]);
+  const navigate = useNavigate();
 
-  // ✅ Fetch all products
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await fetch("http://localhost:5000/api/products");
-        const data = await res.json();
-        setProducts(data);
-        setFiltered(data);
-      } catch (err) {
-        console.error("❌ Error fetching products:", err);
-      }
-    };
-    fetchProducts();
+    fetch("http://localhost:5000/api/products")
+      .then(res => res.json())
+      .then(data => {
+        const prods = data.products || [];
+        setProducts(prods);
+        setFiltered(prods);
+      })
+      .catch(err => console.error("Search fetch error:", err));
   }, []);
 
-  // ✅ Filter products when user types
   useEffect(() => {
-    const results = products.filter((p) =>
-      p.name.toLowerCase().includes(query.toLowerCase())
-    );
-    setFiltered(results);
+    if (query.trim() === "") {
+      setFiltered(products);
+    } else {
+      setFiltered(
+        products.filter(p =>
+          p.name?.toLowerCase().includes(query.toLowerCase())
+        )
+      );
+    }
   }, [query, products]);
 
+  const handleProductClick = (id) => {
+    navigate(`/product/${id}`);
+    onClose();
+  };
+
   return (
-    <AnimatePresence>
-      <motion.div
-        className="fixed inset-0 bg-black/95 backdrop-blur-lg flex flex-col items-center justify-start text-white z-[2000] p-6 overflow-y-auto"
-        initial={{ opacity: 0, y: 40 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 40 }}
-        transition={{ duration: 0.3 }}
-      >
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-6 right-8 text-gray-400 hover:text-[#EAB308] text-3xl transition"
-        >
-          <FaTimes />
-        </button>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/95 z-[9999] flex flex-col p-6"
+    >
+      <button onClick={onClose} className="absolute top-6 right-8 text-4xl text-white hover:text-[#EAB308]">
+        <FaTimes />
+      </button>
 
-        {/* Title */}
-        <h2 className="text-3xl font-semibold mb-6 mt-10">Search Products</h2>
+      <div className="max-w-4xl mx-auto w-full mt-20">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search products..."
+          className="w-full px-6 py-4 text-xl bg-white/10 border border-white/20 rounded-full text-white placeholder-gray-400 focus:outline-none focus:border-[#EAB308]"
+          autoFocus
+        />
 
-        {/* Search Input */}
-        <div className="relative w-full max-w-xl mb-10">
-          <FaSearch className="absolute left-4 top-4 text-gray-500" />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Type to search..."
-            className="w-full bg-[#1A1A1A] py-3 pl-10 pr-4 rounded-lg text-lg text-white focus:outline-none focus:ring-2 focus:ring-[#EAB308]"
-            autoFocus
-          />
+        <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-6">
+          {filtered.map(p => (
+            <motion.div
+              key={p._id}
+              whileHover={{ scale: 1.05 }}
+              onClick={() => handleProductClick(p._id)}
+              className="bg-white/10 rounded-xl overflow-hidden cursor-pointer shadow-lg"
+            >
+              <img
+                src={p.images?.[0] || "https://via.placeholder.com/300"}
+                alt={p.name}
+                className="w-full h-48 object-cover"
+              />
+              <div className="p-4 text-center">
+                <h3 className="font-semibold text-white truncate">{p.name}</h3>
+                <p className="text-[#EAB308] font-bold mt-2">${p.price}</p>
+              </div>
+            </motion.div>
+          ))}
         </div>
 
-        {/* Results */}
-        <motion.div
-          layout
-          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-6xl"
-        >
-          {filtered.length > 0 ? (
-            filtered.map((p) => (
-              <motion.div
-                key={p._id}
-                className="bg-white/10 rounded-xl overflow-hidden shadow-lg hover:scale-105 transition-transform cursor-pointer"
-                whileHover={{ scale: 1.05 }}
-              >
-                <img
-                  src={p.image}
-                  alt={p.name}
-                  className="w-full h-52 object-cover"
-                />
-                <div className="p-4 text-center">
-                  <h3 className="text-lg font-semibold truncate">{p.name}</h3>
-                  <p className="text-[#EAB308] font-bold mt-1">${p.price}</p>
-                </div>
-              </motion.div>
-            ))
-          ) : (
-            <p className="text-gray-400 mt-20 text-lg">
-              No products found for “{query || "your search"}”
-            </p>
-          )}
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+        {filtered.length === 0 && (
+          <p className="text-center text-gray-400 text-xl mt-20">
+            No products found for "{query}"
+          </p>
+        )}
+      </div>
+    </motion.div>
   );
 }

@@ -2,49 +2,60 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import { CartContext } from "../context/CartContext";
 import Logo from "../assets/2WolfLogo.png";
 import { FaHeart, FaShoppingCart, FaUser, FaClock, FaGem, FaTag } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext) || {};
+  const { getCartCount } = useContext(CartContext); // ⭐ NEW (Real cart count)
+
   const navigate = useNavigate();
 
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
   const [wishlistCount, setWishlistCount] = useState(0);
-  const [cartCount, setCartCount] = useState(0);
+
+  // ⭐ REPLACED: cartCount comes from CartContext
+  const [cartCount, setCartCount] = useState(getCartCount());
+
   const [searchValue, setSearchValue] = useState("");
 
   const accountRef = useRef(null);
   const categoriesRef = useRef(null);
 
   const PLUM = "#6E2A6E";
-  const GOLD = "#EAB308";
-  const ROYAL_BLACK = "#0A0A0A";
   const HIGHLIGHT = "#6D28D9";
 
-  // ✅ Read counts from localStorage
-  const readCounts = () => {
+  // ⭐ Wishlist stays localStorage — unchanged
+  const readWishlist = () => {
     try {
       setWishlistCount(parseInt(localStorage.getItem("wishlistCount") || "0", 10));
-      setCartCount(parseInt(localStorage.getItem("cartCount") || "0", 10));
     } catch {
       setWishlistCount(0);
-      setCartCount(0);
     }
   };
 
   useEffect(() => {
-    readCounts();
+    readWishlist();
     const onStorage = (e) => {
-      if (["wishlistCount", "cartCount"].includes(e.key)) readCounts();
+      if (e.key === "wishlistCount") readWishlist();
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
-  // ✅ Close dropdowns when clicking outside
+  // ⭐ NEW: Real Cart Count Listener
+  useEffect(() => {
+    const updateCount = () => setCartCount(getCartCount());
+    updateCount();
+
+    window.addEventListener("cartUpdated", updateCount);
+    return () => window.removeEventListener("cartUpdated", updateCount);
+  }, [getCartCount]);
+
+  // ⭐ Close dropdowns when clicking outside
   useEffect(() => {
     const handleClick = (e) => {
       if (accountRef.current && !accountRef.current.contains(e.target))
@@ -62,16 +73,14 @@ export default function Navbar() {
     navigate("/");
   };
 
-  // ✅ Search Handler (Placeholder for Backend Integration)
   const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setSearchValue(value);
+    setSearchValue(e.target.value);
   };
 
   return (
     <nav className=" top-0 left-0 w-full z-50 shadow-md text-white">
 
-      {/* 🖤 FIRST SECTION - ROYAL BLACK */}
+      {/* 🖤 FIRST SECTION */}
       <div
         className="w-full px-4 sm:px-6 md:px-10 py-2 flex flex-col md:flex-row md:items-center md:justify-between gap-2"
         style={{
@@ -80,28 +89,23 @@ export default function Navbar() {
           WebkitBackdropFilter: "blur(12px)"
         }}
       >
-        {/* 🔸 LEFT: Logo + (Mobile Icons) */}
+        
+        {/* LOGO + MOBILE ICONS */}
         <div className="flex items-center justify-between w-full md:w-auto">
-          {/* ✅ Image logo) */}
-{/* ✅ Logo (Image version) */}
-<Link
-  to="/"
-  className="flex items-center gap-3 shrink-0 hover:opacity-90 transition"
->
-  <span className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#EAB308] select-none font-[Poppins] drop-shadow-[0_1px_1px_rgba(234,179,8,0.4)]">
-    2Wolf
-  </span>
-  <img
-    src={Logo}
-    alt="2Wolf Logo"
-    className="w-12 h-12 object-contain"
-  />
-</Link>
+          <Link
+            to="/"
+            className="flex items-center gap-3 shrink-0 hover:opacity-90 transition"
+          >
+            <span className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#EAB308] select-none font-[Poppins] drop-shadow-[0_1px_1px_rgba(234,179,8,0.4)]">
+              2Wolf
+            </span>
+            <img src={Logo} alt="2Wolf Logo" className="w-12 h-12 object-contain" />
+          </Link>
 
-
-          {/* ✅ Mobile Right Icons (same line) */}
+          {/* MOBILE ICONS */}
           <div className="flex items-center gap-4 md:hidden">
-            {/* Heart */}
+
+            {/* Wishlist */}
             <button
               onClick={() => navigate("/wishlist")}
               className="relative hover:scale-105 transition-transform"
@@ -117,7 +121,7 @@ export default function Navbar() {
               )}
             </button>
 
-            {/* Cart */}
+            {/* ⭐ CART (Real Count) */}
             <button
               onClick={() => navigate("/cart")}
               className="relative hover:scale-105 transition-transform"
@@ -136,10 +140,7 @@ export default function Navbar() {
             {/* User */}
             <div className="relative" ref={accountRef}>
               {!user ? (
-                <Link
-                  to="/signin"
-                  className="text-[#EAB308] text-lg hover:scale-105 transition-transform"
-                >
+                <Link to="/signin" className="text-[#EAB308] text-lg hover:scale-105 transition-transform">
                   <FaUser />
                 </Link>
               ) : (
@@ -150,6 +151,7 @@ export default function Navbar() {
                   >
                     <FaUser />
                   </button>
+
                   <AnimatePresence>
                     {isAccountOpen && (
                       <motion.div
@@ -159,22 +161,15 @@ export default function Navbar() {
                         className="absolute right-0 mt-2 w-40 bg-[#121212] border border-white/10 rounded-lg shadow-lg overflow-hidden z-[9999]"
                       >
                         {user.role === "admin" ? (
-                          <Link
-                            to="/dashboard"
-                            onClick={() => setIsAccountOpen(false)}
-                            className="block px-4 py-2 text-sm text-white hover:bg-[#EAB308]/10"
-                          >
+                          <Link to="/dashboard" onClick={() => setIsAccountOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-[#EAB308]/10">
                             Dashboard
                           </Link>
                         ) : (
-                          <Link
-                            to="/my-account"
-                            onClick={() => setIsAccountOpen(false)}
-                            className="block px-4 py-2 text-sm text-white hover:bg-[#EAB308]/10"
-                          >
+                          <Link to="/my-account" onClick={() => setIsAccountOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-[#EAB308]/10">
                             My Account
                           </Link>
                         )}
+
                         <button
                           onClick={handleLogout}
                           className="w-full text-left px-4 py-2 text-sm text-[#EAB308] hover:bg-[#EAB308]/10"
@@ -190,7 +185,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* 🔍 CENTER: Search Bar (Desktop Only) */}
+        {/* DESKTOP SEARCH */}
         <div className="hidden md:flex flex-1 justify-center px-6">
           <input
             type="text"
@@ -201,8 +196,9 @@ export default function Navbar() {
           />
         </div>
 
-        {/* 🔸 RIGHT: Desktop Icons */}
+        {/* DESKTOP ICONS */}
         <div className="hidden md:flex items-center gap-4">
+
           {/* Wishlist */}
           <button
             onClick={() => navigate("/wishlist")}
@@ -219,7 +215,7 @@ export default function Navbar() {
             )}
           </button>
 
-          {/* Cart */}
+          {/* ⭐ CART (Real Count) */}
           <button
             onClick={() => navigate("/cart")}
             className="relative hover:scale-105 transition-transform"
@@ -235,13 +231,10 @@ export default function Navbar() {
             )}
           </button>
 
-          {/* User Account */}
+          {/* Account */}
           <div className="relative" ref={accountRef}>
             {!user ? (
-              <Link
-                to="/signin"
-                className="text-[#EAB308] text-xl hover:scale-105 transition-transform"
-              >
+              <Link to="/signin" className="text-[#EAB308] text-xl hover:scale-105 transition-transform">
                 <FaUser />
               </Link>
             ) : (
@@ -252,6 +245,7 @@ export default function Navbar() {
                 >
                   <FaUser />
                 </button>
+
                 <AnimatePresence>
                   {isAccountOpen && (
                     <motion.div
@@ -261,22 +255,15 @@ export default function Navbar() {
                       className="absolute right-0 mt-2 w-44 bg-[#121212] border border-white/10 rounded-lg shadow-lg overflow-hidden z-[9999]"
                     >
                       {user.role === "admin" ? (
-                        <Link
-                          to="/dashboard"
-                          onClick={() => setIsAccountOpen(false)}
-                          className="block px-4 py-2 text-sm text-white hover:bg-[#EAB308]/10"
-                        >
+                        <Link to="/dashboard" onClick={() => setIsAccountOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-[#EAB308]/10">
                           Dashboard
                         </Link>
                       ) : (
-                        <Link
-                          to="/my-account"
-                          onClick={() => setIsAccountOpen(false)}
-                          className="block px-4 py-2 text-sm text-white hover:bg-[#EAB308]/10"
-                        >
+                        <Link to="/my-account" onClick={() => setIsAccountOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-[#EAB308]/10">
                           My Account
                         </Link>
                       )}
+
                       <button
                         onClick={handleLogout}
                         className="w-full text-left px-4 py-2 text-sm text-[#EAB308] hover:bg-[#EAB308]/10"
@@ -291,7 +278,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* 🔍 MOBILE SEARCH BAR */}
+        {/* MOBILE SEARCH */}
         <div className="block md:hidden w-full">
           <input
             type="text"
@@ -303,12 +290,12 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* 💜 SECOND SECTION - PLUM */}
+      {/* SECOND SECTION (PLUM) */}
       <div
         className="w-full px-4 sm:px-6 md:px-10 py-2 flex items-center justify-between"
         style={{ background: PLUM }}
       >
-        {/* Categories Dropdown */}
+        {/* CATEGORY DROPDOWN */}
         <div className="relative" ref={categoriesRef}>
           <button 
             onClick={() => setIsCategoriesOpen((v) => !v)}
@@ -360,10 +347,7 @@ export default function Navbar() {
         <Link to="/shop" className="text-white font-semibold hover:opacity-90">
           Shop
         </Link>
-        <Link
-          to="/track-order"
-          className="text-white font-semibold hover:opacity-90"
-        >
+        <Link to="/track-order" className="text-white font-semibold hover:opacity-90">
           Track Order
         </Link>
       </div>
