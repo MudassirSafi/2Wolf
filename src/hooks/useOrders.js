@@ -1,57 +1,87 @@
 // ==========================================
-// 📁 FILE: src/hooks/useOrders.js
-// This hook manages order data and will be ready for backend integration
+// 📁 FILE 2: src/hooks/useOrders.js (FIXED)
 // ==========================================
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'; // ✅ FIXED: Added imports
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export const useOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Initialize with mock data
-  useEffect(() => {
-    // TODO: Replace with actual API call
-    setOrders([
-      { id: 'ORD-1001', customer: 'John Doe', email: 'john@example.com', total: 449.98, status: 'Processing', date: '2025-11-08', items: 2 },
-      { id: 'ORD-1002', customer: 'Jane Smith', email: 'jane@example.com', total: 299.99, status: 'Shipped', date: '2025-11-07', items: 1 },
-      { id: 'ORD-1003', customer: 'Mike Johnson', email: 'mike@example.com', total: 89.99, status: 'Delivered', date: '2025-11-05', items: 1 },
-      { id: 'ORD-1004', customer: 'Sarah Wilson', email: 'sarah@example.com', total: 749.97, status: 'Pending', date: '2025-11-09', items: 3 }
-    ]);
-  }, []);
-
-  // TODO: Replace with actual API call
   const fetchOrders = async () => {
     setLoading(true);
+    setError(null);
     try {
-      // const response = await fetch('/api/orders');
-      // const data = await response.json();
-      // setOrders(data);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('No authentication token');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/orders`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch orders');
+      }
+
+      const data = await response.json();
+      console.log('✅ Orders fetched:', data);
+      
+      setOrders(data.orders || []);
     } catch (err) {
+      console.error('❌ Error fetching orders:', err);
       setError(err.message);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Update order status
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
   const updateOrderStatus = async (id, status) => {
     try {
-      // TODO: Replace with actual API call
-      // await fetch(`/api/orders/${id}/status`, {
-      //   method: 'PATCH',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ status })
-      // });
+      const token = localStorage.getItem('token');
       
-      setOrders(orders.map(o => o.id === id ? { ...o, status } : o));
+      const response = await fetch(`${API_BASE_URL}/api/orders/${id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update order status');
+      }
+
+      const data = await response.json();
+      
+      setOrders(orders.map(o => 
+        o._id === id ? { ...o, status } : o
+      ));
+
+      return data;
     } catch (err) {
       setError(err.message);
       throw err;
     }
   };
 
-  return { orders, loading, error, updateOrderStatus, refetch: fetchOrders };
+  return { 
+    orders, 
+    loading, 
+    error, 
+    updateOrderStatus, 
+    refetch: fetchOrders 
+  };
 };
-
-

@@ -59,65 +59,60 @@ export default function Checkout() {
     return true;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ // Replace the entire handleSubmit function in your Checkout.jsx with this:
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (!validateForm()) return;
+  if (cart.length === 0) {
+    setError('Your cart is empty');
+    return;
+  }
+
+  setLoading(true);
+  setError(null);
+
+  try {
+    const token = localStorage.getItem('token');
     
-    if (!validateForm()) return;
-    if (cart.length === 0) {
-      setError('Your cart is empty');
+    if (!token) {
+      setError('Please sign in to continue');
+      setTimeout(() => {
+        navigate('/signin', { state: { from: '/checkout' } });
+      }, 2000);
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    // Prepare items for backend
+    const items = cart.map(item => ({
+      productId: item._id || item.id,
+      name: item.name || item.title,
+      price: item.price,
+      quantity: item.quantity,
+      image: item.images?.[0] || 'https://via.placeholder.com/150'
+    }));
 
-    try {
-      // Get token from localStorage
-      const token = localStorage.getItem('token');
-      
-      console.log('🔐 Token exists:', !!token);
-      console.log('👤 User:', user);
-      
-      if (!token) {
-        setError('Please sign in to continue');
-        setTimeout(() => {
-          navigate('/signin', { state: { from: '/checkout' } });
-        }, 2000);
-        return;
-      }
+    console.log('📦 Creating order with items:', items);
+    console.log('📍 Shipping info:', shippingInfo);
 
-      // Prepare items for Stripe
-      const items = cart.map(item => ({
-        productId: item._id || item.id,
-        name: item.name || item.title,
-        price: item.price,
-        quantity: item.quantity,
-        image: item.images?.[0] || 'https://via.placeholder.com/150'
-      }));
+    // Create checkout session with shipping info
+    const response = await cartApi.createCheckoutSession(items, token, shippingInfo);
+    
+    console.log('✅ Checkout session created:', response);
 
-      console.log('📦 Sending items to Stripe:', items);
-      console.log('🔑 Using token:', token.substring(0, 20) + '...');
-
-      // Create Stripe checkout session
-      const response = await cartApi.createCheckoutSession(items, token);
-      
-      console.log('✅ Stripe response:', response);
-
-      // Redirect to Stripe
-      if (response.url) {
-        window.location.href = response.url;
-      } else if (response.sessionId) {
-        // Fallback: construct Stripe URL manually
-        window.location.href = `https://checkout.stripe.com/pay/${response.sessionId}`;
-      } else {
-        throw new Error('No checkout URL received from server');
-      }
-    } catch (err) {
-      console.error('❌ Checkout error:', err);
-      setError(err.message || 'Failed to process payment. Please try again.');
-      setLoading(false);
+    // Redirect to Stripe
+    if (response.url) {
+      console.log('🔗 Redirecting to Stripe...');
+      window.location.href = response.url;
+    } else {
+      throw new Error('No checkout URL received from server');
     }
-  };
+  } catch (err) {
+    console.error('❌ Checkout error:', err);
+    setError(err.message || 'Failed to process payment. Please try again.');
+    setLoading(false);
+  }
+};
 
   if (!user) {
     return (

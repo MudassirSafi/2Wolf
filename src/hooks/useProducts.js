@@ -1,90 +1,126 @@
 // ==========================================
-// 📁 FILE: src/hooks/useProducts.js
-// This hook manages product data and will be ready for backend integration
+// 📁 FILE 1: src/hooks/useProducts.js (FIXED)
 // ==========================================
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'; // ✅ FIXED: Added imports
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export const useProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Initialize with mock data
-  useEffect(() => {
-    // TODO: Replace with actual API call
-    // fetchProducts();
-    setProducts([
-      { id: 1, name: 'Premium Leather Jacket', sku: 'PLJ-001', price: 299.99, stock: 45, status: 'In Stock', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=100&h=100&fit=crop', category: 'Clothing' },
-      { id: 2, name: 'Wireless Headphones', sku: 'WH-202', price: 149.99, stock: 8, status: 'Low Stock', image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=100&h=100&fit=crop', category: 'Electronics' },
-      { id: 3, name: 'Smart Watch Pro', sku: 'SWP-303', price: 399.99, stock: 0, status: 'Out of Stock', image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100&h=100&fit=crop', category: 'Electronics' },
-      { id: 4, name: 'Running Shoes', sku: 'RS-404', price: 89.99, stock: 120, status: 'In Stock', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=100&h=100&fit=crop', category: 'Footwear' }
-    ]);
-  }, []);
-
-  // TODO: Replace with actual API call
   const fetchProducts = async () => {
     setLoading(true);
+    setError(null);
     try {
-      // const response = await fetch('/api/products');
-      // const data = await response.json();
-      // setProducts(data);
+      const response = await fetch(`${API_BASE_URL}/api/products`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+
+      const data = await response.json();
+      console.log('✅ Products fetched:', data);
+      
+      setProducts(data.products || []);
     } catch (err) {
+      console.error('❌ Error fetching products:', err);
       setError(err.message);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Add new product
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
   const addProduct = async (product) => {
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/products', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(product)
-      // });
-      // const newProduct = await response.json();
+      const token = localStorage.getItem('token');
       
-      const newProduct = { ...product, id: Date.now() };
-      setProducts([...products, newProduct]);
-      return newProduct;
+      const response = await fetch(`${API_BASE_URL}/api/products`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(product)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create product');
+      }
+
+      const data = await response.json();
+      setProducts([...products, data.product]);
+      return data.product;
     } catch (err) {
       setError(err.message);
       throw err;
     }
   };
 
-  // Update product
   const updateProduct = async (id, updatedProduct) => {
     try {
-      // TODO: Replace with actual API call
-      // const response = await fetch(`/api/products/${id}`, {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(updatedProduct)
-      // });
-      // const data = await response.json();
+      const token = localStorage.getItem('token');
       
-      setProducts(products.map(p => p.id === id ? { ...p, ...updatedProduct } : p));
+      const response = await fetch(`${API_BASE_URL}/api/products/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedProduct)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update product');
+      }
+
+      const data = await response.json();
+      setProducts(products.map(p => 
+        p._id === id ? data.product : p
+      ));
+      
+      return data.product;
     } catch (err) {
       setError(err.message);
       throw err;
     }
   };
 
-  // Delete product
   const deleteProduct = async (id) => {
     try {
-      // TODO: Replace with actual API call
-      // await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      const token = localStorage.getItem('token');
       
-      setProducts(products.filter(p => p.id !== id));
+      const response = await fetch(`${API_BASE_URL}/api/products/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete product');
+      }
+
+      setProducts(products.filter(p => p._id !== id));
     } catch (err) {
       setError(err.message);
       throw err;
     }
   };
 
-  return { products, loading, error, addProduct, updateProduct, deleteProduct, refetch: fetchProducts };
+  return { 
+    products, 
+    loading, 
+    error, 
+    addProduct, 
+    updateProduct, 
+    deleteProduct, 
+    refetch: fetchProducts 
+  };
 };

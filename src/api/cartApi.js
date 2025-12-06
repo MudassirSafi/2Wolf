@@ -1,13 +1,16 @@
 // ✅ src/api/cartApi.js
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+// Create Stripe checkout session
+
 export const cartApi = {
-  // Create Stripe checkout session
-  createCheckoutSession: async (cartItems, token) => {
+  
+  createCheckoutSession: async (cartItems, token, shippingInfo) => {
     try {
-      console.log('🔑 Token being sent:', token ? token.substring(0, 30) + '...' : 'NONE');
+      console.log('=== CART API DEBUG START ===');
+      console.log('🔑 Token:', token ? token.substring(0, 30) + '...' : 'NONE');
       console.log('📦 Items:', cartItems);
-      console.log('🌐 URL:', `${API_BASE_URL}/api/orders/create-checkout-session`);
+      console.log('📍 Shipping:', shippingInfo);
       
       const response = await fetch(`${API_BASE_URL}/api/orders/create-checkout-session`, {
         method: 'POST',
@@ -15,20 +18,38 @@ export const cartApi = {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ items: cartItems })
+        body: JSON.stringify({ 
+          items: cartItems,
+          shippingInfo: shippingInfo 
+        })
       });
       
       console.log('📡 Response status:', response.status);
       
-      if (!response.ok) {
-        const error = await response.json();
-        console.log('❌ Error response:', error);
-        throw new Error(error.message || 'Failed to create checkout session');
+      const responseText = await response.text();
+      console.log('📥 Raw response:', responseText);
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('❌ Failed to parse response:', parseError);
+        throw new Error(`Server returned invalid JSON. Status: ${response.status}`);
       }
       
-      return await response.json();
+      if (!response.ok) {
+        console.log('❌ Error response:', data);
+        throw new Error(data.message || `HTTP ${response.status}`);
+      }
+      
+      console.log('✅ Success response:', data);
+      console.log('=== CART API DEBUG END ===\n');
+      
+      return data;
     } catch (error) {
-      console.error('Error creating checkout session:', error);
+      console.error('=== CART API ERROR ===');
+      console.error('Error:', error);
+      console.log('=== CART API DEBUG END ===\n');
       throw error;
     }
   },

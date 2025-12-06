@@ -1,19 +1,30 @@
-// ✅ src/context/CartContext.jsx
-// Manages cart state globally across the application
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import { AuthContext } from './AuthContext';
 
+// Create the CartContext
 export const CartContext = createContext();
+
+// Custom hook to use cart context
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error('useCart must be used within a CartProvider');
+  }
+  return context;
+};
 
 export default function CartProvider({ children }) {
   const [cart, setCart] = useState([]);
-  const { user } = useContext(AuthContext);
 
   // Load cart from localStorage on mount
   useEffect(() => {
     const savedCart = localStorage.getItem('2wolf_cart');
     if (savedCart) {
-      setCart(JSON.parse(savedCart));
+      try {
+        setCart(JSON.parse(savedCart));
+      } catch (error) {
+        console.error('Error loading cart:', error);
+        setCart([]);
+      }
     }
   }, []);
 
@@ -24,28 +35,39 @@ export default function CartProvider({ children }) {
     window.dispatchEvent(new Event('cartUpdated'));
   }, [cart]);
 
-  // Add item to cart
+  // Add item to cart - supports both _id and id
   const addToCart = (product, quantity = 1) => {
     setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.id === product.id);
+      const productId = product._id || product.id;
+      const existingItem = prevCart.find(item => 
+        (item._id || item.id) === productId
+      );
       
       if (existingItem) {
         // Update quantity if item already exists
-        return prevCart.map(item =>
-          item.id === product.id
+        return prevCart.map(item => {
+          const itemId = item._id || item.id;
+          return itemId === productId
             ? { ...item, quantity: item.quantity + quantity }
-            : item
-        );
+            : item;
+        });
       }
       
-      // Add new item
-      return [...prevCart, { ...product, quantity }];
+      // Add new item with normalized structure
+      return [...prevCart, { 
+        ...product, 
+        id: productId,
+        _id: productId,
+        quantity 
+      }];
     });
   };
 
   // Remove item from cart
   const removeFromCart = (productId) => {
-    setCart(prevCart => prevCart.filter(item => item.id !== productId));
+    setCart(prevCart => prevCart.filter(item => 
+      (item._id || item.id) !== productId
+    ));
   };
 
   // Update item quantity
@@ -56,9 +78,10 @@ export default function CartProvider({ children }) {
     }
     
     setCart(prevCart =>
-      prevCart.map(item =>
-        item.id === productId ? { ...item, quantity } : item
-      )
+      prevCart.map(item => {
+        const itemId = item._id || item.id;
+        return itemId === productId ? { ...item, quantity } : item;
+      })
     );
   };
 

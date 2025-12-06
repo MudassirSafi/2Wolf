@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
 import { AuthContext } from "../context/AuthContext";
 import { FaChevronLeft, FaCartPlus } from "react-icons/fa";
+import ProductReviews from '../components/ProductReviews';
 import { motion } from "framer-motion";
 
 export default function ProductPage() {
@@ -151,6 +152,10 @@ export default function ProductPage() {
               </motion.button>
             </div>
           </motion.div>
+          {/* Reviews Section  */}
+<div className="container mx-auto px-4 max-w-6xl mt-12">
+  <ProductReviews productId={product._id} />
+</div>
         </div>
       </div>
     </div>
