@@ -1,11 +1,11 @@
-// ✅ src/pages/Checkout.jsx 
-import React, { useState, useContext } from 'react';
+// ✅ src/pages/Checkout.jsx - Updated with Location Integration
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CartContext } from '../context/CartContext';
 import { AuthContext } from '../context/AuthContext';
 import { cartApi } from '../api/cartApi';
 import { motion } from 'framer-motion';
-import { FaCreditCard, FaShippingFast, FaLock } from 'react-icons/fa';
+import { FaCreditCard, FaShippingFast, FaLock, FaMapMarkerAlt } from 'react-icons/fa';
 
 export default function Checkout() {
   const { cart, getCartTotal, clearCart } = useContext(CartContext);
@@ -14,6 +14,7 @@ export default function Checkout() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
   
   const [shippingInfo, setShippingInfo] = useState({
     fullName: user?.name || '',
@@ -23,8 +24,25 @@ export default function Checkout() {
     city: '',
     state: '',
     zipCode: '',
-    country: 'Pakistan'
+    country: ''
   });
+
+  // Load user location from localStorage
+  useEffect(() => {
+    const savedLocation = localStorage.getItem('userLocation');
+    if (savedLocation) {
+      const location = JSON.parse(savedLocation);
+      setUserLocation(location);
+      
+      // Pre-fill shipping info with saved location
+      setShippingInfo(prev => ({
+        ...prev,
+        country: location.countryName || '',
+        city: location.city || '',
+        state: location.area || '' // Use area as state/province
+      }));
+    }
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -35,7 +53,7 @@ export default function Checkout() {
   };
 
   const validateForm = () => {
-    const required = ['fullName', 'email', 'phone', 'address', 'city', 'state', 'zipCode'];
+    const required = ['fullName', 'email', 'phone', 'address', 'city', 'country'];
     for (let field of required) {
       if (!shippingInfo[field]?.trim()) {
         setError(`Please fill in ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`);
@@ -59,60 +77,63 @@ export default function Checkout() {
     return true;
   };
 
- // Replace the entire handleSubmit function in your Checkout.jsx with this:
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  
-  if (!validateForm()) return;
-  if (cart.length === 0) {
-    setError('Your cart is empty');
-    return;
-  }
-
-  setLoading(true);
-  setError(null);
-
-  try {
-    const token = localStorage.getItem('token');
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     
-    if (!token) {
-      setError('Please sign in to continue');
-      setTimeout(() => {
-        navigate('/signin', { state: { from: '/checkout' } });
-      }, 2000);
+    if (!validateForm()) return;
+    if (cart.length === 0) {
+      setError('Your cart is empty');
       return;
     }
 
-    // Prepare items for backend
-    const items = cart.map(item => ({
-      productId: item._id || item.id,
-      name: item.name || item.title,
-      price: item.price,
-      quantity: item.quantity,
-      image: item.images?.[0] || 'https://via.placeholder.com/150'
-    }));
+    setLoading(true);
+    setError(null);
 
-    console.log('📦 Creating order with items:', items);
-    console.log('📍 Shipping info:', shippingInfo);
+    try {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setError('Please sign in to continue');
+        setTimeout(() => {
+          navigate('/signin', { state: { from: '/checkout' } });
+        }, 2000);
+        return;
+      }
 
-    // Create checkout session with shipping info
-    const response = await cartApi.createCheckoutSession(items, token, shippingInfo);
-    
-    console.log('✅ Checkout session created:', response);
+      // Prepare items for backend
+      const items = cart.map(item => ({
+        productId: item._id || item.id,
+        name: item.name || item.title,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.images?.[0] || 'https://via.placeholder.com/150'
+      }));
 
-    // Redirect to Stripe
-    if (response.url) {
-      console.log('🔗 Redirecting to Stripe...');
-      window.location.href = response.url;
-    } else {
-      throw new Error('No checkout URL received from server');
+      console.log('📦 Creating order with items:', items);
+      console.log('📍 Shipping info:', shippingInfo);
+
+      // Create checkout session with shipping info
+      const response = await cartApi.createCheckoutSession(items, token, shippingInfo);
+      
+      console.log('✅ Checkout session created:', response);
+
+      // Redirect to Stripe
+      if (response.url) {
+        console.log('🔗 Redirecting to Stripe...');
+        window.location.href = response.url;
+      } else {
+        throw new Error('No checkout URL received from server');
+      }
+    } catch (err) {
+      console.error('❌ Checkout error:', err);
+      setError(err.message || 'Failed to process payment. Please try again.');
+      setLoading(false);
     }
-  } catch (err) {
-    console.error('❌ Checkout error:', err);
-    setError(err.message || 'Failed to process payment. Please try again.');
-    setLoading(false);
-  }
-};
+  };
+
+  const handleChangeLocation = () => {
+    navigate('/', { state: { openLocationModal: true } });
+  };
 
   if (!user) {
     return (
@@ -159,6 +180,34 @@ const handleSubmit = async (e) => {
           >
             <span>⚠️</span>
             <span>{error}</span>
+          </motion.div>
+        )}
+
+        {/* Location Display Banner */}
+        {userLocation && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4 mb-6"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <FaMapMarkerAlt className="text-blue-600 text-xl" />
+                <div>
+                  <p className="text-sm text-gray-600">Delivering to:</p>
+                  <p className="font-bold text-gray-800">
+                    {userLocation.countryName} - {userLocation.city}
+                    {userLocation.area && ` - ${userLocation.area}`}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleChangeLocation}
+                className="text-blue-600 hover:text-blue-800 text-sm font-medium hover:underline transition"
+              >
+                Change
+              </button>
+            </div>
           </motion.div>
         )}
 
@@ -215,7 +264,7 @@ const handleSubmit = async (e) => {
                       onChange={handleInputChange}
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B8860B] focus:outline-none"
-                      placeholder="+92 300 1234567"
+                      placeholder="+971 50 123 4567"
                     />
                   </div>
 
@@ -229,7 +278,8 @@ const handleSubmit = async (e) => {
                       value={shippingInfo.country}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B8860B] focus:outline-none"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B8860B] focus:outline-none bg-gray-50"
+                      placeholder="United Arab Emirates"
                     />
                   </div>
 
@@ -244,7 +294,7 @@ const handleSubmit = async (e) => {
                       onChange={handleInputChange}
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B8860B] focus:outline-none"
-                      placeholder="123 Main Street"
+                      placeholder="Building name, Street name"
                     />
                   </div>
 
@@ -258,40 +308,45 @@ const handleSubmit = async (e) => {
                       value={shippingInfo.city}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B8860B] focus:outline-none"
-                      placeholder="Rawalpindi"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B8860B] focus:outline-none bg-gray-50"
+                      placeholder="Dubai"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      State/Province *
+                      Area/District (Optional)
                     </label>
                     <input
                       type="text"
                       name="state"
                       value={shippingInfo.state}
                       onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B8860B] focus:outline-none"
-                      placeholder="Punjab"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B8860B] focus:outline-none bg-gray-50"
+                      placeholder="Downtown"
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      ZIP/Postal Code *
+                      ZIP/Postal Code (Optional)
                     </label>
                     <input
                       type="text"
                       name="zipCode"
                       value={shippingInfo.zipCode}
                       onChange={handleInputChange}
-                      required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B8860B] focus:outline-none"
-                      placeholder="46000"
+                      placeholder="00000"
                     />
                   </div>
+                </div>
+
+                {/* Info Box */}
+                <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <p className="text-sm text-gray-700">
+                    <span className="font-semibold">💡 Tip:</span> Make sure your delivery address matches your selected location for accurate delivery estimates.
+                  </p>
                 </div>
               </div>
 
@@ -334,7 +389,7 @@ const handleSubmit = async (e) => {
                 ) : (
                   <>
                     <FaCreditCard />
-                    <span>Pay ${getCartTotal().toFixed(2)} with Card</span>
+                    <span>Pay AED {getCartTotal().toFixed(2)} with Card</span>
                   </>
                 )}
               </button>
@@ -362,7 +417,7 @@ const handleSubmit = async (e) => {
                       <p className="font-semibold text-sm">{item.name || item.title}</p>
                       <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                       <p className="text-sm font-bold text-[#B8860B]">
-                        ${(item.price * item.quantity).toFixed(2)}
+                        AED {(item.price * item.quantity).toFixed(2)}
                       </p>
                     </div>
                   </div>
@@ -372,17 +427,34 @@ const handleSubmit = async (e) => {
               <div className="space-y-3 border-t pt-4">
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
-                  <span>${getCartTotal().toFixed(2)}</span>
+                  <span>AED {getCartTotal().toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Shipping</span>
                   <span className="text-green-600 font-semibold">Free</span>
                 </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>VAT (5%)</span>
+                  <span>AED {(getCartTotal() * 0.05).toFixed(2)}</span>
+                </div>
                 <div className="border-t pt-3 flex justify-between text-xl font-bold text-gray-800">
                   <span>Total</span>
-                  <span>${getCartTotal().toFixed(2)}</span>
+                  <span>AED {(getCartTotal() * 1.05).toFixed(2)}</span>
                 </div>
               </div>
+
+              {/* Delivery Info */}
+              {userLocation && (
+                <div className="mt-4 pt-4 border-t">
+                  <div className="flex items-start gap-2 text-sm text-gray-600">
+                    <FaShippingFast className="text-green-600 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-gray-800">Estimated Delivery</p>
+                      <p>3-5 business days to {userLocation.city}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

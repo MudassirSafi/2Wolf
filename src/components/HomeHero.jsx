@@ -1,225 +1,257 @@
+// src/components/HomeHero.jsx
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function HomeHero() {
+  const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [hoveredSlide, setHoveredSlide] = useState(null);
-  const [hoveredCard, setHoveredCard] = useState(null);
-  const [hoveredStatic, setHoveredStatic] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [categoryProducts, setCategoryProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Sample product images for slider
-  const sliderProducts = [
-    { id: 1, img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&h=400&fit=crop", name: "Luxury Watch", title: "Timeless Elegance" },
-    { id: 2, img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&h=400&fit=crop", name: "Premium Headphones", title: "Sound Perfection" },
-    { id: 3, img: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=800&h=400&fit=crop", name: "Designer Sunglasses", title: "Style Icon" },
-    { id: 4, img: "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=800&h=400&fit=crop", name: "Classic Wallet", title: "Premium Leather" },
-    { id: 5, img: "https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=800&h=400&fit=crop", name: "Elegant Bracelet", title: "Luxury Jewelry" }
+  const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:5000';
+
+  // Main slider categories with images
+  const heroSlides = [
+    {
+      category: "electronics",
+      title: "Electronics Essentials",
+      image: "https://images.unsplash.com/photo-1498049794561-7780e7231661?w=1200",
+      subtitle: "Up to 50% off"
+    },
+    {
+      category: "fashion",
+      title: "Fashion & Apparel",
+      image: "https://images.unsplash.com/photo-1445205170230-053b83016050?w=1200",
+      subtitle: "New arrivals"
+    },
+    {
+      category: "home-appliances",
+      title: "Home Appliances",
+      image: "https://images.unsplash.com/photo-1556911220-bff31c812dba?w=1200",
+      subtitle: "Best deals"
+    },
+    {
+      category: "sports",
+      title: "Sports & Outdoors",
+      image: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1200",
+      subtitle: "Stay active"
+    },
+    {
+      category: "books",
+      title: "Books & Media",
+      image: "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=1200",
+      subtitle: "Explore now"
+    },
+    {
+      category: "toys",
+      title: "Toys & Games",
+      image: "https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=1200",
+      subtitle: "Fun for everyone"
+    },
+    {
+      category: "beauty",
+      title: "Beauty & Personal Care",
+      image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1200",
+      subtitle: "Look your best"
+    },
+    {
+      category: "kitchen",
+      title: "Kitchen & Dining",
+      image: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=1200",
+      subtitle: "Cook like a pro"
+    },
+    {
+      category: "automotive",
+      title: "Automotive",
+      image: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1200",
+      subtitle: "For your vehicle"
+    },
+    {
+      category: "pet-supplies",
+      title: "Pet Supplies",
+      image: "https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=1200",
+      subtitle: "Happy pets"
+    }
   ];
 
-  // Featured products cards
-  const featuredProducts = [
-    { id: 101, img: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400", name: "Gold Watch", price: "$299" },
-    { id: 102, img: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400", name: "Aviator Sunglasses", price: "$149" },
-    { id: 103, img: "https://images.unsplash.com/photo-1610824352934-c10d87b700cc?w=400", name: "Leather Bag", price: "$199" },
-    { id: 104, img: "https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=400", name: "Silver Bracelet", price: "$89" }
+  // Category boxes data
+  const categoryBoxes = [
+    {
+      title: "Up to 70% off | Men's Fashion",
+      items: [
+        { name: "Polos", image: "https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?w=300", category: "fashion" },
+        { name: "Watches", image: "https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=300", category: "watches" },
+        { name: "Sunglasses", image: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=300", category: "sunglasses" },
+        { name: "Shoes", image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=300", category: "shoes" }
+      ]
+    },
+    {
+      title: "Stay fit in style",
+      items: [
+        { name: "Men's shoes", image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300", category: "mens-shoes" },
+        { name: "Women's shoes", image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300", category: "womens-shoes" },
+        { name: "Men's clothes", image: "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=300", category: "mens-clothes" },
+        { name: "Women's clothes", image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=300", category: "womens-clothes" }
+      ]
+    },
+    {
+      title: "Up to 40% off | Appliances",
+      items: [
+        { name: "Air fryers", image: "https://images.unsplash.com/photo-1585659722983-3a675dabf23d?w=300", category: "air-fryers" },
+        { name: "Air purifiers", image: "https://images.unsplash.com/photo-1617333146840-3ef047070531?w=300", category: "air-purifiers" },
+        { name: "Cookers", image: "https://images.unsplash.com/photo-1585515320310-d9a8b0b7f598?w=300", category: "cookers" },
+        { name: "Blenders", image: "https://images.unsplash.com/photo-1585515320310-d9a8b0b7f598?w=300", category: "blenders" }
+      ]
+    },
+    {
+      title: "Toys for all ages",
+      items: [
+        { name: "Learning toys", image: "https://images.unsplash.com/photo-1558877385-7e7d45c058b5?w=300", category: "learning-toys" },
+        { name: "Building blocks", image: "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=300", category: "building-blocks" },
+        { name: "Dolls", image: "https://images.unsplash.com/photo-1607305387299-a3d9611cd469?w=300", category: "dolls" },
+        { name: "Outdoor play", image: "https://images.unsplash.com/photo-1558877385-e44eb3f46a87?w=300", category: "outdoor-play" }
+      ]
+    },
+    {
+      title: "Tools & equipment",
+      items: [
+        { name: "Power tools", image: "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=300", category: "power-tools" },
+        { name: "Pressure washer", image: "https://images.unsplash.com/photo-1617433820319-c6e3c70e3f69?w=300", category: "pressure-washer" },
+        { name: "Tool box", image: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=300", category: "tool-box" },
+        { name: "Tester", image: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=300", category: "tester" }
+      ]
+    },
+    {
+      title: "Shop by platform",
+      items: [
+        { name: "Xbox One", image: "https://images.unsplash.com/photo-1621259182978-fbf93132d53d?w=300", category: "xbox" },
+        { name: "PlayStation 4", image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=300", category: "playstation" },
+        { name: "Nintendo Switch", image: "https://images.unsplash.com/photo-1578303512597-81e6cc155b3e?w=300", category: "nintendo" },
+        { name: "Gaming accessories", image: "https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?w=300", category: "gaming-accessories" }
+      ]
+    },
+    {
+      title: "Shop AmazonBasics",
+      items: [
+        { name: "Home collection", image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=300", category: "home-collection" },
+        { name: "Towels", image: "https://images.unsplash.com/photo-1585238341710-4c1ce17ab53b?w=300", category: "towels" },
+        { name: "Travel gears", image: "https://images.unsplash.com/photo-1565026057447-bc90a3dceb87?w=300", category: "travel-gears" },
+        { name: "Cables", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300", category: "cables" }
+      ]
+    },
+    {
+      title: "Your basic linens",
+      items: [
+        { name: "Bed sheets", image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=300", category: "bed-sheets" },
+        { name: "Mattress toppers", image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=300", category: "mattress-toppers" },
+        { name: "Comforters", image: "https://images.unsplash.com/photo-1615799998603-7c6270a45196?w=300", category: "comforters" },
+        { name: "Printed sheets", image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=300", category: "printed-sheets" }
+      ]
+    }
   ];
 
-  // Auto slide effect every 3 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % sliderProducts.length);
-    }, 3000);
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    }, 6000);
     return () => clearInterval(interval);
   }, []);
 
-  const CartIcon = () => (
-    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-      <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z" />
-    </svg>
-  );
+  const handleSlideClick = (category) => {
+    navigate(`/categories?category=${category}`);
+  };
+
+  const handleCategoryItemClick = (category) => {
+    navigate(`/categories?category=${category}`);
+  };
+
+  const convertToAED = (usdPrice) => {
+    return (usdPrice * 3.67).toFixed(2);
+  };
 
   return (
-    <section className="relative pt-0 pb-6 overflow-hidden font-poppins text-[#0A0A0A] bg-[#FAF8F5]">
-      {/* ✨ Subtle Background Gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#FAF8F5] via-[#F8F5F0] to-[#F3EFEA]"></div>
-
-      <div className="relative z-10 w-full max-w-[1400px] mx-auto px-4">
-        
-        {/* TOP SECTION - 3 Rectangle Images */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          
-          {/* 🔸 IMAGE 1: Auto-Sliding Products with Title */}
+    <div className="bg-gray-100">
+      {/* Hero Slider */}
+      <div className="relative h-[400px] bg-gray-900 overflow-hidden">
+        <AnimatePresence mode="wait">
           <motion.div
-            initial={{ y: -50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.1 }}
-            className="relative h-64 md:h-80 bg-white/70 backdrop-blur-xl border border-gray-300/30 rounded-2xl shadow-lg overflow-hidden md:col-span-2"
-            onMouseEnter={() => setHoveredSlide(currentSlide)}
-            onMouseLeave={() => setHoveredSlide(null)}
-          >
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentSlide}
-                initial={{ opacity: 0, scale: 1.1 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.6 }}
-                className="absolute inset-0"
-              >
-                <img
-                  src={sliderProducts[currentSlide].img}
-                  alt={sliderProducts[currentSlide].name}
-                  className="w-full h-full object-cover"
-                />
-                
-                {/* Gradient overlay for title */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                
-                {/* Title always visible */}
-                <div className="absolute bottom-6 left-6 z-10">
-                  <h3 className="text-2xl md:text-3xl font-bold text-white drop-shadow-lg">
-                    {sliderProducts[currentSlide].title}
-                  </h3>
-                  <p className="text-white/90 text-sm mt-1">
-                    {sliderProducts[currentSlide].name}
-                  </p>
-                </div>
-
-                {/* Overlay on hover */}
-                {hoveredSlide === currentSlide && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="absolute inset-0 bg-black/40 flex items-center justify-center"
-                  >
-                    <a
-                      href={`/product/${sliderProducts[currentSlide].id}`}
-                      className="bg-[#D4AF37] text-[#0A0A0A] font-bold px-6 py-3 rounded-full hover:bg-[#EAB308] transition flex items-center gap-2"
-                    >
-                      <CartIcon /> Shop Now
-                    </a>
-                  </motion.div>
-                )}
-              </motion.div>
-            </AnimatePresence>
-            
-            {/* Slide indicators */}
-            <div className="absolute bottom-3 right-6 flex gap-2 z-10">
-              {sliderProducts.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentSlide(idx)}
-                  className={`w-2 h-2 rounded-full transition ${
-                    idx === currentSlide ? "bg-[#D4AF37] w-6" : "bg-white/50"
-                  }`}
-                />
-              ))}
-            </div>
-          </motion.div>
-
-          {/* 🔸 IMAGE 2: Static Image with Shop Button */}
-          <motion.div
-            initial={{ y: -50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative h-64 md:h-80 bg-white/70 backdrop-blur-xl border border-gray-300/30 rounded-2xl shadow-lg overflow-hidden group"
-            onMouseEnter={() => setHoveredStatic(true)}
-            onMouseLeave={() => setHoveredStatic(false)}
+            key={currentSlide}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 1 }}
+            className="absolute inset-0 cursor-pointer"
+            onClick={() => handleSlideClick(heroSlides[currentSlide].category)}
           >
             <img
-              src="https://images.unsplash.com/photo-1610824352934-c10d87b700cc?w=500&h=400&fit=crop"
-              alt="Featured Product"
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              src={heroSlides[currentSlide].image}
+              alt={heroSlides[currentSlide].title}
+              className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            
-            {hoveredStatic && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="absolute inset-0 bg-black/40 flex items-center justify-center"
-              >
-                <a
-                  href="/product/999"
-                  className="bg-[#D4AF37] text-[#0A0A0A] font-bold px-6 py-3 rounded-full hover:bg-[#EAB308] transition flex items-center gap-2"
-                >
-                  <CartIcon /> Shop Now
-                </a>
-              </motion.div>
-            )}
-          </motion.div>
-        </div>
-
-        {/* 🔸 MIDDLE SECTION: All Products Banner */}
-        <motion.div
-          initial={{ y: -30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-          className="relative h-48 md:h-56 rounded-2xl shadow-lg overflow-hidden group mb-6"
-        >
-          <a
-            href="/shop"
-            className="block w-full h-full bg-gradient-to-br from-[#6E2A6E] to-[#5A215A]"
-          >
-            <div className="absolute inset-0 flex items-center justify-center">
-              <h3 className="text-3xl md:text-4xl font-bold text-white group-hover:scale-110 transition-transform duration-300">
-                All Products
-              </h3>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+            <div className="absolute bottom-12 left-12">
+              <h2 className="text-5xl font-bold text-white mb-2">
+                {heroSlides[currentSlide].title}
+              </h2>
+              <p className="text-2xl text-white/90">
+                {heroSlides[currentSlide].subtitle}
+              </p>
             </div>
-            <div className="absolute inset-0 bg-[#D4AF37]/0 group-hover:bg-[#D4AF37]/20 transition-colors duration-300" />
-          </a>
-        </motion.div>
+          </motion.div>
+        </AnimatePresence>
 
-        {/* 🔸 BOTTOM SECTION: Featured Products Cards */}
-        <motion.div
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-          className="grid grid-cols-2 lg:grid-cols-4 gap-4"
-        >
-          {featuredProducts.map((product, idx) => (
-            <motion.div
-              key={product.id}
-              initial={{ y: 30, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.5 + 0.1 * idx }}
-              onMouseEnter={() => setHoveredCard(product.id)}
-              onMouseLeave={() => setHoveredCard(null)}
-              className="relative bg-white/80 backdrop-blur-lg border border-gray-300/30 rounded-xl shadow-lg overflow-hidden group cursor-pointer"
-            >
-              <a href={`/product/${product.id}`}>
-                <div className="aspect-square overflow-hidden">
-                  <img
-                    src={product.img}
-                    alt={product.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                </div>
-                <div className="p-3 sm:p-4">
-                  <h4 className="font-bold text-[#0A0A0A] text-sm sm:text-base group-hover:text-[#6E2A6E] transition">
-                    {product.name}
-                  </h4>
-                  <p className="text-[#D4AF37] font-bold text-base sm:text-lg mt-1">{product.price}</p>
-                </div>
-                
-                {/* Hover overlay */}
-                {hoveredCard === product.id && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="absolute inset-0 bg-[#6E2A6E]/90 flex items-center justify-center"
-                  >
-                    <span className="text-white font-bold text-sm sm:text-base flex items-center gap-2">
-                      <CartIcon /> View Details
-                    </span>
-                  </motion.div>
-                )}
-              </a>
-            </motion.div>
+        {/* Slide Indicators */}
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+          {heroSlides.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentSlide(idx)}
+              className={`h-2 rounded-full transition-all ${
+                idx === currentSlide ? "bg-white w-8" : "bg-white/50 w-2"
+              }`}
+            />
           ))}
-        </motion.div>
-
+        </div>
       </div>
-    </section>
+
+      {/* Category Boxes */}
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {categoryBoxes.map((box, boxIdx) => (
+            <div key={boxIdx} className="bg-white rounded-lg p-6 shadow hover:shadow-lg transition">
+              <h3 className="text-xl font-bold mb-4">{box.title}</h3>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                {box.items.map((item, itemIdx) => (
+                  <div
+                    key={itemIdx}
+                    onClick={() => handleCategoryItemClick(item.category)}
+                    className="cursor-pointer group"
+                  >
+                    <div className="aspect-square overflow-hidden rounded mb-2">
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                    </div>
+                    <p className="text-sm text-center group-hover:text-blue-600">
+                      {item.name}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => handleCategoryItemClick(box.items[0].category)}
+                className="text-blue-600 hover:text-orange-600 text-sm font-medium"
+              >
+                Explore all →
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

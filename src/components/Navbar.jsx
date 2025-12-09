@@ -1,14 +1,17 @@
-// ==========================================
-// 📁 FILE 1: src/components/Navbar.jsx (UPDATED)
-// ==========================================
+// ✅ src/components/Navbar.jsx - Amazon-Inspired Design
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { CartContext } from "../context/CartContext";
 import Logo from "../assets/2WolfLogo.png";
-import { FaHeart, FaShoppingCart, FaUser, FaBars, FaTimes, FaSearch } from "react-icons/fa";
+import { 
+  FaHeart, FaShoppingCart, FaUser, FaBars, FaTimes, FaSearch, 
+  FaMapMarkerAlt, FaChevronDown, FaBoxOpen, FaTag, FaMobileAlt,
+  FaLaptop, FaHeartbeat, FaTshirt, FaSpa, FaGamepad, FaShoppingBasket
+} from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import SearchOverlay from "./SearchOverlay";
+import LocationModal from "./LocationModal";
 
 export default function Navbar() {
   const { user, logout } = useContext(AuthContext) || {};
@@ -19,13 +22,27 @@ export default function Navbar() {
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isLocationOpen, setIsLocationOpen] = useState(false);
+  const [isCategoriesOpen, setIsCategoriesOpen] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [cartCount, setCartCount] = useState(getCartCount());
 
   const accountRef = useRef(null);
+  const categoriesRef = useRef(null);
 
-  const PLUM = "#6E2A6E";
-  const HIGHLIGHT = "#6D28D9";
+  // Load user location
+  useEffect(() => {
+    const loadLocation = () => {
+      const saved = localStorage.getItem('userLocation');
+      if (saved) {
+        setUserLocation(JSON.parse(saved));
+      }
+    };
+    loadLocation();
+    window.addEventListener('locationUpdated', loadLocation);
+    return () => window.removeEventListener('locationUpdated', loadLocation);
+  }, []);
 
   // Wishlist
   const readWishlist = () => {
@@ -53,11 +70,13 @@ export default function Navbar() {
     return () => window.removeEventListener("cartUpdated", updateCount);
   }, [getCartCount]);
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClick = (e) => {
       if (accountRef.current && !accountRef.current.contains(e.target))
         setIsAccountOpen(false);
+      if (categoriesRef.current && !categoriesRef.current.contains(e.target))
+        setIsCategoriesOpen(false);
     };
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
@@ -69,382 +88,329 @@ export default function Navbar() {
     navigate("/");
   };
 
+  const categories = [
+    { name: "Amazon Devices", icon: FaLaptop, path: "/category/devices" },
+    { name: "Fashion", icon: FaTshirt, path: "/category/fashion" },
+    { name: "Mobile Phones", icon: FaMobileAlt, path: "/category/mobile" },
+    { name: "Electronics", icon: FaLaptop, path: "/category/electronics" },
+    { name: "Health & Personal Care", icon: FaHeartbeat, path: "/category/health" },
+    { name: "Beauty", icon: FaSpa, path: "/category/beauty" },
+    { name: "Video Games", icon: FaGamepad, path: "/category/games" },
+    { name: "Grocery & Food", icon: FaShoppingBasket, path: "/category/grocery" }
+  ];
+
   return (
     <>
-      <nav className="top-0 left-0 w-full z-50 shadow-md text-white">
-        {/* FIRST SECTION - Black Background */}
-        <div
-          className="w-full px-4 sm:px-6 md:px-10 py-2 flex flex-col md:flex-row md:items-center md:justify-between gap-2"
-          style={{
-            background: "rgba(10, 10, 10, 0.95)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)"
-          }}
-        >
-          {/* LOGO + MOBILE ICONS */}
-          <div className="flex items-center justify-between w-full md:w-auto">
-            <Link
-              to="/"
-              className="flex items-center gap-3 shrink-0 hover:opacity-90 transition"
-            >
-              <span className="text-3xl md:text-4xl font-extrabold tracking-tight text-[#EAB308] select-none font-[Poppins] drop-shadow-[0_1px_1px_rgba(234,179,8,0.4)]">
-                2Wolf
-              </span>
-              <img src={Logo} alt="2Wolf Logo" className="w-12 h-12 object-contain" />
-            </Link>
+      <nav className="sticky top-0 left-0 w-full z-50 shadow-lg">
+        {/* ===== TOP BAR - Dark Background ===== */}
+        <div className="w-full px-4 sm:px-6 md:px-10 py-3 flex items-center justify-between gap-4 bg-[#131921]">
+          
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 shrink-0 hover:opacity-90 transition">
+            <img src={Logo} alt="2Wolf" className="w-10 h-10 object-contain" />
+            <span className="text-2xl font-bold text-white hidden sm:block font-[Poppins]">
+              2Wolf
+            </span>
+          </Link>
 
-            {/* MOBILE ICONS */}
-            <div className="flex items-center gap-4 md:hidden">
-              {/* Search Icon */}
-              <button
-                onClick={() => setIsSearchOpen(true)}
-                className="text-[#EAB308] text-lg hover:scale-105 transition-transform"
-              >
-                <FaSearch />
-              </button>
-
-              {/* Wishlist */}
-              <button
-                onClick={() => navigate("/wishlist")}
-                className="relative hover:scale-105 transition-transform"
-              >
-                <FaHeart className="text-[#EAB308] text-lg" />
-                {wishlistCount > 0 && (
-                  <span
-                    className="absolute -top-2 -right-2 rounded-full px-[5px] text-[10px] font-bold"
-                    style={{ background: HIGHLIGHT, color: "#fff" }}
-                  >
-                    {wishlistCount}
-                  </span>
-                )}
-              </button>
-
-              {/* Cart */}
-              <button
-                onClick={() => navigate("/cart")}
-                className="relative hover:scale-105 transition-transform"
-              >
-                <FaShoppingCart className="text-[#EAB308] text-lg" />
-                {cartCount > 0 && (
-                  <span
-                    className="absolute -top-2 -right-2 rounded-full px-[5px] text-[10px] font-bold"
-                    style={{ background: HIGHLIGHT, color: "#fff" }}
-                  >
-                    {cartCount}
-                  </span>
-                )}
-              </button>
-
-              {/* User */}
-              <div className="relative" ref={accountRef}>
-                {!user ? (
-                  <Link to="/signin" className="text-[#EAB308] text-lg hover:scale-105 transition-transform">
-                    <FaUser />
-                  </Link>
-                ) : (
+          {/* Location Button */}
+          <button
+            onClick={() => setIsLocationOpen(true)}
+            className="hidden lg:flex items-center gap-2 px-3 py-1 hover:bg-white/10 rounded transition"
+          >
+            <FaMapMarkerAlt className="text-white text-lg" />
+            <div className="text-left">
+              <p className="text-xs text-gray-300">Deliver to</p>
+              <p className="text-sm font-bold text-white flex items-center gap-1">
+                {userLocation ? (
                   <>
-                    <button
-                      onClick={() => setIsAccountOpen((v) => !v)}
-                      className="text-[#EAB308] text-lg hover:scale-105 transition-transform"
-                    >
-                      <FaUser />
-                    </button>
-
-                    <AnimatePresence>
-                      {isAccountOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 5 }}
-                          className="absolute right-0 top-full mt-2 w-40 bg-[#121212] border border-white/10 rounded-lg shadow-xl z-[9999]"
-                        >
-                          {user.role === "admin" ? (
-                            <Link to="/admin/dashboard" onClick={() => setIsAccountOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-[#EAB308]/10 rounded-t-lg">
-                              Dashboard
-                            </Link>
-                          ) : (
-                            <Link to="/my-account" onClick={() => setIsAccountOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-[#EAB308]/10 rounded-t-lg">
-                              My Account
-                            </Link>
-                          )}
-
-                          <button
-                            onClick={handleLogout}
-                            className="w-full text-left px-4 py-2 text-sm text-[#EAB308] hover:bg-[#EAB308]/10 rounded-b-lg"
-                          >
-                            Logout
-                          </button>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                    {userLocation.countryName?.split(' ')[0]} {userLocation.city}
                   </>
+                ) : (
+                  "Select location"
                 )}
-              </div>
+                <FaChevronDown className="text-xs" />
+              </p>
+            </div>
+          </button>
+
+          {/* Search Bar */}
+          <div className="hidden md:flex flex-1 max-w-3xl">
+            <div className="flex w-full rounded-lg overflow-hidden shadow-md">
+              <select className="px-3 py-2 bg-gray-200 text-gray-700 text-sm font-medium border-r border-gray-300 focus:outline-none cursor-pointer">
+                <option>All</option>
+                <option>Electronics</option>
+                <option>Fashion</option>
+                <option>Home & Kitchen</option>
+                <option>Beauty</option>
+              </select>
+              <input
+                type="text"
+                placeholder="Search 2Wolf"
+                onClick={() => setIsSearchOpen(true)}
+                className="flex-1 px-4 py-2 text-sm focus:outline-none"
+              />
+              <button 
+                onClick={() => setIsSearchOpen(true)}
+                className="px-6 bg-gradient-to-r from-[#FF9900] to-[#FF8000] hover:from-[#FF8000] hover:to-[#FF7000] transition"
+              >
+                <FaSearch className="text-white text-lg" />
+              </button>
             </div>
           </div>
 
-          {/* DESKTOP SEARCH */}
-          <div className="hidden md:flex flex-1 justify-center px-6">
-            <button
-              onClick={() => setIsSearchOpen(true)}
-              className="w-full max-w-lg py-2 pl-4 pr-4 rounded-full text-sm sm:text-base text-white bg-[#1a1a1a] border border-[#2a2a2a] hover:border-[#EAB308] transition-all duration-300 text-left flex items-center gap-2"
-            >
-              <FaSearch className="text-gray-400" />
-              <span className="text-gray-400">Search for products...</span>
-            </button>
+          {/* Language Selector */}
+          <div className="hidden lg:flex items-center gap-1 px-2 py-1 hover:bg-white/10 rounded cursor-pointer transition">
+            <span className="text-white text-sm font-bold">EN</span>
+            <FaChevronDown className="text-white text-xs" />
           </div>
 
-          {/* DESKTOP ICONS */}
-          <div className="hidden md:flex items-center gap-4">
-            {/* Wishlist */}
+          {/* Account & Lists */}
+          <div className="hidden lg:block relative" ref={accountRef}>
             <button
-              onClick={() => navigate("/wishlist")}
-              className="relative hover:scale-105 transition-transform"
+              onClick={() => setIsAccountOpen(v => !v)}
+              className="flex flex-col items-start px-2 py-1 hover:bg-white/10 rounded transition"
             >
-              <FaHeart className="text-[#EAB308] text-xl" />
-              {wishlistCount > 0 && (
-                <span
-                  className="absolute -top-2 -right-2 rounded-full px-[5px] text-[11px] font-bold"
-                  style={{ background: HIGHLIGHT, color: "#fff" }}
-                >
-                  {wishlistCount}
-                </span>
-              )}
+              <span className="text-xs text-gray-300">
+                Hello, {user ? user.name?.split(' ')[0] : "sign in"}
+              </span>
+              <span className="text-sm font-bold text-white flex items-center gap-1">
+                Account & Lists <FaChevronDown className="text-xs" />
+              </span>
             </button>
 
-            {/* Cart */}
-            <button
-              onClick={() => navigate("/cart")}
-              className="relative hover:scale-105 transition-transform"
-            >
-              <FaShoppingCart className="text-[#EAB308] text-xl" />
-              {cartCount > 0 && (
-                <span
-                  className="absolute -top-2 -right-2 rounded-full px-[5px] text-[11px] font-bold"
-                  style={{ background: HIGHLIGHT, color: "#fff" }}
+            <AnimatePresence>
+              {isAccountOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 5 }}
+                  className="absolute right-0 top-full mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-2xl z-[9999]"
                 >
+                  {!user ? (
+                    <div className="p-4">
+                      <Link
+                        to="/signin"
+                        className="block w-full bg-gradient-to-r from-[#FF9900] to-[#FF8000] hover:from-[#FF8000] hover:to-[#FF7000] text-white text-center font-semibold py-2 rounded-lg transition"
+                      >
+                        Sign In
+                      </Link>
+                      <p className="text-xs text-gray-600 mt-2">
+                        New customer?{" "}
+                        <Link to="/signup" className="text-blue-600 hover:underline">
+                          Start here
+                        </Link>
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-2">
+                      {user.role === "admin" && (
+                        <Link
+                          to="/admin/dashboard"
+                          onClick={() => setIsAccountOpen(false)}
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded"
+                        >
+                          Dashboard
+                        </Link>
+                      )}
+                      <Link
+                        to="/my-account"
+                        onClick={() => setIsAccountOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded"
+                      >
+                        My Account
+                      </Link>
+                      <Link
+                        to="/orders"
+                        onClick={() => setIsAccountOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded"
+                      >
+                        Orders
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded"
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Returns & Orders */}
+          <Link
+            to="/orders"
+            className="hidden lg:flex flex-col items-start px-2 py-1 hover:bg-white/10 rounded transition"
+          >
+            <span className="text-xs text-gray-300">Returns</span>
+            <span className="text-sm font-bold text-white">& Orders</span>
+          </Link>
+
+          {/* Cart */}
+          <button
+            onClick={() => navigate("/cart")}
+            className="relative flex items-center gap-2 px-2 py-1 hover:bg-white/10 rounded transition"
+          >
+            <div className="relative">
+              <FaShoppingCart className="text-white text-2xl" />
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-[#FF9900] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                   {cartCount}
                 </span>
               )}
-            </button>
-
-            {/* Account */}
-            <div className="relative" ref={accountRef}>
-              {!user ? (
-                <Link to="/signin" className="text-[#EAB308] text-xl hover:scale-105 transition-transform">
-                  <FaUser />
-                </Link>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setIsAccountOpen((v) => !v)}
-                    className="text-[#EAB308] text-xl hover:scale-105 transition-transform"
-                  >
-                    <FaUser />
-                  </button>
-
-                  <AnimatePresence>
-                    {isAccountOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 5 }}
-                        className="absolute right-0 top-full mt-2 w-40 bg-[#121212] border border-white/10 rounded-lg shadow-xl z-[9999]"
-                      >
-                        {user.role === "admin" ? (
-                          <Link to="/admin/dashboard" onClick={() => setIsAccountOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-[#EAB308]/10 rounded-t-lg">
-                            Dashboard
-                          </Link>
-                        ) : (
-                          <Link to="/my-account" onClick={() => setIsAccountOpen(false)} className="block px-4 py-2 text-sm text-white hover:bg-[#EAB308]/10 rounded-t-lg">
-                            My Account
-                          </Link>
-                        )}
-
-                        <button
-                          onClick={handleLogout}
-                          className="w-full text-left px-4 py-2 text-sm text-[#EAB308] hover:bg-[#EAB308]/10 rounded-b-lg"
-                        >
-                          Logout
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </>
-              )}
             </div>
-          </div>
-        </div>
+            <span className="hidden lg:block text-sm font-bold text-white">Cart</span>
+          </button>
 
-        {/* SECOND SECTION - Plum Background */}
-        <div
-          className="w-full px-4 sm:px-6 md:px-10 py-2 flex items-center justify-between"
-          style={{ background: PLUM }}
-        >
-          {/* MOBILE - Hamburger Menu */}
+          {/* Mobile Menu Button */}
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="text-white text-xl md:hidden hover:opacity-90"
+            className="lg:hidden text-white text-2xl"
           >
             <FaBars />
           </button>
+        </div>
 
-          {/* DESKTOP - Navigation Links */}
-          <div className="hidden md:flex items-center gap-6">
-            <Link to="/" className="text-white font-semibold hover:opacity-90">
-              Home
-            </Link>
-            <Link to="/best-kitchen-equipments" className="text-white font-semibold hover:opacity-90">
-              Kitchen Equipments
-            </Link>
-            <Link to="/shop-by-brand" className="text-white font-semibold hover:opacity-90">
-              Shop by Brand
-            </Link>
-            <Link to="/products" className="text-white font-semibold hover:opacity-90">
-              Shop
-            </Link>
-            <Link to="/supermarket" className="text-white font-semibold hover:opacity-90">
-              Super Market
-            </Link>
+        {/* ===== BOTTOM BAR - Navy Blue ===== */}
+        <div className="w-full px-4 sm:px-6 md:px-10 py-2 flex items-center gap-6 bg-[#232F3E] overflow-x-auto">
+          {/* All Categories Dropdown */}
+          <div className="relative" ref={categoriesRef}>
+            <button
+              onClick={() => setIsCategoriesOpen(v => !v)}
+              className="flex items-center gap-2 px-3 py-1.5 text-white font-semibold hover:bg-white/10 rounded transition whitespace-nowrap"
+            >
+              <FaBars /> All
+            </button>
+
+            <AnimatePresence>
+              {isCategoriesOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 5 }}
+                  className="absolute left-0 top-full mt-2 w-64 bg-white rounded-lg shadow-2xl z-[9999] max-h-96 overflow-y-auto"
+                >
+                  {categories.map((cat) => (
+                    <Link
+                      key={cat.name}
+                      to={cat.path}
+                      onClick={() => setIsCategoriesOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 transition"
+                    >
+                      <cat.icon className="text-[#FF9900] text-lg" />
+                      <span className="text-sm font-medium">{cat.name}</span>
+                    </Link>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* TRACK ORDER - Always visible */}
-          <Link to="/track-order" className="text-white font-semibold hover:opacity-90">
-            Track Order
+          {/* Navigation Links */}
+          <Link to="/deals" className="text-white text-sm font-semibold hover:text-[#FF9900] transition whitespace-nowrap">
+            Today's Deals
           </Link>
+          <Link to="/bestsellers" className="text-white text-sm font-semibold hover:text-[#FF9900] transition whitespace-nowrap">
+            Best Sellers
+          </Link>
+          <Link to="/new-releases" className="text-white text-sm font-semibold hover:text-[#FF9900] transition whitespace-nowrap">
+            New Releases
+          </Link>
+          <Link to="/prime" className="text-white text-sm font-semibold hover:text-[#FF9900] transition whitespace-nowrap">
+            Prime
+          </Link>
+          <Link to="/mobile-phones" className="text-white text-sm font-semibold hover:text-[#FF9900] transition whitespace-nowrap">
+            Mobile Phones
+          </Link>
+          <Link to="/electronics" className="text-white text-sm font-semibold hover:text-[#FF9900] transition whitespace-nowrap">
+            Electronics
+          </Link>
+          <Link to="/fashion" className="text-white text-sm font-semibold hover:text-[#FF9900] transition whitespace-nowrap">
+            Fashion
+          </Link>
+
+          {/* Mobile Location */}
+          <button
+            onClick={() => setIsLocationOpen(true)}
+            className="lg:hidden text-white text-sm font-semibold hover:text-[#FF9900] transition whitespace-nowrap flex items-center gap-2"
+          >
+            <FaMapMarkerAlt /> Location
+          </button>
+        </div>
+
+        {/* Mobile Search Bar */}
+        <div className="md:hidden w-full px-4 py-2 bg-[#131921]">
+          <button
+            onClick={() => setIsSearchOpen(true)}
+            className="w-full flex items-center gap-3 px-4 py-2 bg-white rounded-lg text-left"
+          >
+            <FaSearch className="text-gray-400" />
+            <span className="text-gray-500 text-sm">Search 2Wolf</span>
+          </button>
         </div>
       </nav>
 
-      {/* MOBILE SIDEBAR */}
+      {/* ===== MODALS ===== */}
+      <LocationModal 
+        isOpen={isLocationOpen} 
+        onClose={() => setIsLocationOpen(false)}
+        user={user}
+      />
+
+      <AnimatePresence>
+        {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} />}
+      </AnimatePresence>
+
+      {/* Mobile Sidebar */}
       <AnimatePresence>
         {isSidebarOpen && (
           <>
-            {/* Overlay */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsSidebarOpen(false)}
-              className="fixed inset-0 bg-black/60 z-[100] md:hidden"
+              className="fixed inset-0 bg-black/60 z-[100] lg:hidden"
             />
 
-            {/* Sidebar */}
             <motion.div
               initial={{ x: -300 }}
               animate={{ x: 0 }}
               exit={{ x: -300 }}
               transition={{ type: "spring", damping: 25 }}
-              className="fixed top-0 left-0 h-full w-80 bg-[#0A0A0A] z-[101] overflow-y-auto md:hidden shadow-2xl"
+              className="fixed top-0 left-0 h-full w-80 bg-white z-[101] overflow-y-auto lg:hidden shadow-2xl"
             >
-              {/* Sidebar Header */}
-              <div className="flex items-center justify-between p-6 border-b border-white/10">
-                <span className="text-2xl font-bold text-[#EAB308]">Menu</span>
-                <button
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="text-white text-2xl hover:text-[#EAB308]"
-                >
+              <div className="bg-[#232F3E] p-6 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FaUser className="text-white text-2xl" />
+                  <span className="text-white font-bold">
+                    Hello, {user ? user.name?.split(' ')[0] : "Sign in"}
+                  </span>
+                </div>
+                <button onClick={() => setIsSidebarOpen(false)} className="text-white text-2xl">
                   <FaTimes />
                 </button>
               </div>
 
-              {/* Menu Section */}
-              <div className="p-6 border-b border-white/10">
-                <h3 className="text-sm font-bold text-[#EAB308] mb-4 uppercase tracking-wider">Menu</h3>
-                <div className="space-y-3">
+              <div className="p-6 space-y-4">
+                {categories.map((cat) => (
                   <Link
-                    to="/"
+                    key={cat.name}
+                    to={cat.path}
                     onClick={() => setIsSidebarOpen(false)}
-                    className="block text-white hover:text-[#EAB308] transition py-2"
+                    className="flex items-center gap-3 py-2 text-gray-700 hover:text-[#FF9900] transition"
                   >
-                    Home
+                    <cat.icon className="text-xl" />
+                    <span className="font-medium">{cat.name}</span>
                   </Link>
-                  <Link
-                    to="/best-kitchen-equipments"
-                    onClick={() => setIsSidebarOpen(false)}
-                    className="block text-white hover:text-[#EAB308] transition py-2"
-                  >
-                    Kitchen Equipments
-                  </Link>
-                  <Link
-                    to="/shop-by-brand"
-                    onClick={() => setIsSidebarOpen(false)}
-                    className="block text-white hover:text-[#EAB308] transition py-2"
-                  >
-                    Shop by Brand
-                  </Link>
-                  <Link
-                    to="/products"
-                    onClick={() => setIsSidebarOpen(false)}
-                    className="block text-white hover:text-[#EAB308] transition py-2"
-                  >
-                    Shop
-                  </Link>
-                  <Link
-                    to="/supermarket"
-                    onClick={() => setIsSidebarOpen(false)}
-                    className="block text-white hover:text-[#EAB308] transition py-2"
-                  >
-                    Super Market
-                  </Link>
-                </div>
-              </div>
-
-              {/* Categories Section */}
-              <div className="p-6">
-                <h3 className="text-sm font-bold text-[#EAB308] mb-4 uppercase tracking-wider">Categories</h3>
-                <div className="space-y-3">
-                  <Link
-                    to="/category/cooking-line"
-                    onClick={() => setIsSidebarOpen(false)}
-                    className="block text-white hover:text-[#EAB308] transition py-2"
-                  >
-                    Cooking Line
-                  </Link>
-                  <Link
-                    to="/category/refrigeration-line"
-                    onClick={() => setIsSidebarOpen(false)}
-                    className="block text-white hover:text-[#EAB308] transition py-2"
-                  >
-                    Refrigeration Line
-                  </Link>
-                  <Link
-                    to="/category/bakery-line"
-                    onClick={() => setIsSidebarOpen(false)}
-                    className="block text-white hover:text-[#EAB308] transition py-2"
-                  >
-                    Bakery Line
-                  </Link>
-                  <Link
-                    to="/category/coffee-bar-line"
-                    onClick={() => setIsSidebarOpen(false)}
-                    className="block text-white hover:text-[#EAB308] transition py-2"
-                  >
-                    Coffee and Bar Line
-                  </Link>
-                  <Link
-                    to="/category/food-processing"
-                    onClick={() => setIsSidebarOpen(false)}
-                    className="block text-white hover:text-[#EAB308] transition py-2"
-                  >
-                    Food Processing
-                  </Link>
-                  <Link
-                    to="/category/dry-store"
-                    onClick={() => setIsSidebarOpen(false)}
-                    className="block text-white hover:text-[#EAB308] transition py-2"
-                  >
-                    Dry Store
-                  </Link>
-                </div>
+                ))}
               </div>
             </motion.div>
           </>
         )}
-      </AnimatePresence>
-
-      {/* SEARCH OVERLAY */}
-      <AnimatePresence>
-        {isSearchOpen && <SearchOverlay onClose={() => setIsSearchOpen(false)} />}
       </AnimatePresence>
     </>
   );
