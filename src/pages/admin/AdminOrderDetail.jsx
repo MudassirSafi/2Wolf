@@ -1,10 +1,10 @@
 // ==========================================
-// 📁 FILE 3: src/pages/admin/AdminOrderDetail.jsx (View Single Order Detail)
+// 📁 FILE: src/pages/admin/AdminOrderDetail.jsx (WITH INVOICE UPLOAD)
 // ==========================================
 import React, { useState, useEffect } from 'react';
 import AdminLayout from './AdminLayout';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaUser, FaEnvelope, FaMapMarkerAlt, FaBox, FaCreditCard, FaShippingFast, FaClock } from 'react-icons/fa';
+import { FaArrowLeft, FaUser, FaEnvelope, FaMapMarkerAlt, FaBox, FaCreditCard, FaShippingFast, FaClock, FaFileInvoice, FaUpload, FaDownload, FaTrash, FaCheckCircle } from 'react-icons/fa';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -16,6 +16,11 @@ const AdminOrderDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [updating, setUpdating] = useState(false);
+  
+  // Invoice upload states
+  const [invoiceFile, setInvoiceFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [invoiceInfo, setInvoiceInfo] = useState(null);
 
   useEffect(() => {
     fetchOrderDetail();
@@ -40,6 +45,11 @@ const AdminOrderDetail = () => {
       const data = await response.json();
       console.log('✅ Order detail:', data);
       setOrder(data.order);
+      
+      // Check if invoice exists
+      if (data.order.invoice) {
+        setInvoiceInfo(data.order.invoice);
+      }
     } catch (err) {
       console.error('❌ Error fetching order:', err);
       setError(err.message);
@@ -68,11 +78,86 @@ const AdminOrderDetail = () => {
 
       const data = await response.json();
       setOrder(data.order);
-      alert('Order status updated successfully!');
+      alert('✅ Order status updated successfully!');
     } catch (err) {
-      alert('Failed to update status: ' + err.message);
+      alert('❌ Failed to update status: ' + err.message);
     } finally {
       setUpdating(false);
+    }
+  };
+
+  // Upload Invoice Function
+  const uploadInvoice = async () => {
+    if (!invoiceFile) {
+      alert('⚠️ Please select a file first');
+      return;
+    }
+
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('invoice', invoiceFile);
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/invoices/upload/${id}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload invoice');
+      }
+
+      const data = await response.json();
+      setInvoiceInfo(data.invoice);
+      setInvoiceFile(null);
+      alert('✅ Invoice uploaded successfully!');
+      
+      // Refresh order to get updated invoice info
+      fetchOrderDetail();
+    } catch (error) {
+      console.error('Error uploading invoice:', error);
+      alert('❌ Failed to upload invoice: ' + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Delete Invoice Function
+  const deleteInvoice = async () => {
+    if (!confirm('Are you sure you want to delete this invoice?')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/invoices/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete invoice');
+      }
+
+      setInvoiceInfo(null);
+      alert('✅ Invoice deleted successfully!');
+      fetchOrderDetail();
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
+      alert('❌ Failed to delete invoice: ' + error.message);
+    }
+  };
+
+  // Download Invoice Function
+  const downloadInvoice = () => {
+    if (invoiceInfo && invoiceInfo.path) {
+      window.open(`${API_BASE_URL}${invoiceInfo.path}`, '_blank');
     }
   };
 
@@ -191,6 +276,114 @@ const AdminOrderDetail = () => {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* ⭐ NEW: Invoice Upload Section */}
+            <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-xl p-4 sm:p-6">
+              <h2 className="text-lg font-bold text-[#E5E5E5] mb-4 flex items-center gap-2">
+                <FaFileInvoice className="text-[#6D28D9]" />
+                Invoice Management
+              </h2>
+
+              {invoiceInfo ? (
+                // Invoice exists - Show download/delete options
+                <div className="space-y-4">
+                  <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <FaCheckCircle className="text-green-400 text-xl" />
+                      <div className="flex-1">
+                        <p className="text-[#E5E5E5] font-semibold">Invoice Uploaded</p>
+                        <p className="text-xs text-[#9CA3AF]">{invoiceInfo.originalName}</p>
+                        <p className="text-xs text-[#6B7280]">
+                          Uploaded: {formatDate(invoiceInfo.uploadedAt)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={downloadInvoice}
+                        className="flex-1 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition flex items-center justify-center gap-2"
+                      >
+                        <FaDownload />
+                        Download
+                      </button>
+                      <button
+                        onClick={deleteInvoice}
+                        className="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition flex items-center justify-center gap-2"
+                      >
+                        <FaTrash />
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                // No invoice - Show upload form
+                <div className="space-y-4">
+                  <div className="border-2 border-dashed border-[#3A3A3A] rounded-lg p-6 text-center">
+                    <FaFileInvoice className="text-4xl text-[#6D28D9] mx-auto mb-3" />
+                    <p className="text-[#E5E5E5] font-medium mb-2">Upload Invoice</p>
+                    <p className="text-sm text-[#9CA3AF] mb-4">
+                      PDF, JPG, PNG (Max 5MB)
+                    </p>
+                    
+                    <input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => setInvoiceFile(e.target.files[0])}
+                      className="hidden"
+                      id="invoice-upload"
+                    />
+                    
+                    {invoiceFile ? (
+                      <div className="bg-[#2A2A2A] rounded-lg p-3 mb-3">
+                        <p className="text-[#E5E5E5] text-sm font-medium">
+                          📄 {invoiceFile.name}
+                        </p>
+                        <p className="text-xs text-[#9CA3AF]">
+                          {(invoiceFile.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                    ) : null}
+
+                    <div className="flex gap-3">
+                      <label
+                        htmlFor="invoice-upload"
+                        className="flex-1 py-2 bg-[#2A2A2A] hover:bg-[#3A3A3A] text-[#E5E5E5] font-semibold rounded-lg transition cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <FaUpload />
+                        Choose File
+                      </label>
+                      
+                      {invoiceFile && (
+                        <button
+                          onClick={uploadInvoice}
+                          disabled={uploading}
+                          className="flex-1 py-2 bg-[#6D28D9] hover:bg-[#7C3AED] text-white font-semibold rounded-lg transition disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                          {uploading ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-white"></div>
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <FaUpload />
+                              Upload
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+                    <p className="text-xs text-blue-400">
+                      💡 Tip: Upload invoice so customer can download it from their account
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Order Items */}

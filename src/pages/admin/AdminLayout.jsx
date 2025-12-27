@@ -1,18 +1,18 @@
-// ==========================================
-// 📁 FILE: src/pages/admin/AdminLayout.jsx
-// ==========================================
+// src/pages/admin/AdminLayout.jsx - COMPLETE WORKING VERSION
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
-const AdminLayout = ({ children }) => {
+const AdminLayout = ({ children }) => {  // ✅ MUST have { children }
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const location = useLocation();
 
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: '📊' },
     { path: '/dashboard/products', label: 'Products', icon: '📦' },
+    { path: '/dashboard/import', label: 'Import Products', icon: '📥' },
     { path: '/dashboard/orders', label: 'Orders', icon: '🛒' },
     { path: '/dashboard/customers', label: 'Customers', icon: '👥' },
+    { path: '/dashboard/shipping', label: 'Shipping', icon: '🚚' },
     { path: '/dashboard/settings', label: 'Settings', icon: '⚙️' }
   ];
 
@@ -22,7 +22,7 @@ const AdminLayout = ({ children }) => {
       <aside className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-[#1A1A1A] border-r border-[#2A2A2A] transition-all duration-300 flex flex-col`}>
         <div className="p-6 border-b border-[#2A2A2A] flex items-center justify-between">
           <h1 className={`text-2xl font-bold bg-gradient-to-r from-[#6D28D9] to-[#A855F7] bg-clip-text text-transparent ${!isSidebarOpen && 'hidden'}`}>
-            2Wolf
+            2Wolf Admin
           </h1>
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-[#E5E5E5] hover:text-[#6D28D9] transition">
             {isSidebarOpen ? '◀' : '▶'}
@@ -45,6 +45,17 @@ const AdminLayout = ({ children }) => {
             </Link>
           ))}
         </nav>
+
+        {/* Back to Store */}
+        <div className="p-4 border-t border-[#2A2A2A]">
+          <Link
+            to="/"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-[#E5E5E5] hover:bg-[#2A2A2A] transition"
+          >
+            <span className="text-xl">🏠</span>
+            {isSidebarOpen && <span className="font-medium">Back to Store</span>}
+          </Link>
+        </div>
       </aside>
 
       {/* Main Content */}
@@ -55,7 +66,9 @@ const AdminLayout = ({ children }) => {
             <button className="lg:hidden text-[#E5E5E5]" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
               ☰
             </button>
-            <h2 className="text-xl font-semibold text-[#E5E5E5]">Admin Dashboard</h2>
+            <h2 className="text-xl font-semibold text-[#E5E5E5]">
+              {navItems.find(item => item.path === location.pathname)?.label || 'Dashboard'}
+            </h2>
           </div>
           <div className="flex items-center gap-4">
             <button className="px-4 py-2 text-[#E5E5E5] hover:text-[#6D28D9] transition">🔔</button>
@@ -65,7 +78,7 @@ const AdminLayout = ({ children }) => {
           </div>
         </header>
 
-        {/* Page Content */}
+        {/* ✅ CRITICAL: Page Content - MUST render children */}
         <main className="flex-1 overflow-y-auto p-8 bg-[#0A0A0A]">
           {children}
         </main>
@@ -75,4 +88,3 @@ const AdminLayout = ({ children }) => {
 };
 
 export default AdminLayout;
-

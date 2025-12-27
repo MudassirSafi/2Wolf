@@ -1,3 +1,4 @@
+// src/components/CategoryCards.jsx
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
@@ -6,6 +7,58 @@ export default function CategoryCards() {
   const [loading, setLoading] = useState(true);
 
   const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:5000';
+
+  // Complete category structure
+  const categoryStructure = {
+    "📱 Electronics": {
+      subcategories: ["Mobile Phones", "Smartphone Accessories", "Laptops", "Tablets"]
+    },
+    "👗 Fashion": {
+      subcategories: ["Men's Clothing", "Women's Clothing", "Kids Clothing", "Accessories"]
+    },
+    "🏠 Home & Kitchen": {
+      subcategories: ["Furniture", "Kitchen Appliances", "Home Decor", "Bedding"]
+    },
+    "🧴 Beauty & Care": {
+      subcategories: ["Skincare", "Hair Care", "Makeup", "Fragrances"]
+    },
+    "💊 Health": {
+      subcategories: ["Vitamins", "Medical Supplies", "First Aid", "Wellness"]
+    },
+    "🍼 Baby Products": {
+      subcategories: ["Diapers", "Baby Food", "Baby Clothing", "Baby Toys"]
+    },
+    "🧸 Toys & Games": {
+      subcategories: ["Action Figures", "Board Games", "Puzzles", "Outdoor Toys"]
+    },
+    "📚 Books": {
+      subcategories: ["Fiction", "Non-Fiction", "Children's Books", "Stationery"]
+    },
+    "🎮 Video Games": {
+      subcategories: ["Console Games", "PC Games", "Gaming Accessories", "VR Games"]
+    },
+    "🎵 Music & Movies": {
+      subcategories: ["CDs & Vinyl", "DVDs", "Musical Instruments", "Karaoke"]
+    },
+    "🚗 Automotive": {
+      subcategories: ["Car Accessories", "Car Electronics", "Tools", "Tires"]
+    },
+    "🏋️ Sports": {
+      subcategories: ["Fitness Equipment", "Outdoor Recreation", "Cycling", "Sports Apparel"]
+    },
+    "🐶 Pet Supplies": {
+      subcategories: ["Dog Supplies", "Cat Supplies", "Pet Food", "Pet Toys"]
+    },
+    "🧰 Tools": {
+      subcategories: ["Power Tools", "Hand Tools", "Safety Equipment", "Measuring Tools"]
+    },
+    "🏢 Office": {
+      subcategories: ["Office Furniture", "Printers", "Paper Products", "Writing"]
+    },
+    "🌱 Garden": {
+      subcategories: ["Gardening Tools", "Plants & Seeds", "Outdoor Furniture", "Lawn Care"]
+    }
+  };
 
   useEffect(() => {
     const fetchCategoryProducts = async () => {
@@ -16,49 +69,29 @@ export default function CategoryCards() {
         if (data.success && data.products) {
           const products = data.products;
           
-          // Group products by category and subCategory
-          const categoryMap = {
-            "Men's Fashion": {
-              title: "Up to 70% off men's fashion",
-              subCategories: ["Polos", "Watches", "Sunglasses", "Shoes"],
-              products: {}
-            },
-            "Fitness": {
-              title: "Stay fit in style",
-              subCategories: ["Men's Shoes", "Women's Shoes", "Men's Clothes", "Women's Clothes"],
-              products: {}
-            },
-            "Appliances": {
-              title: "Up to 40% off | Appliances",
-              subCategories: ["Air Fryers", "Air Purifiers", "Cookers", "Blenders & Juicers"],
-              products: {}
-            },
-            "Toys": {
-              title: "Toys for all ages",
-              subCategories: ["Learning Toys", "Building Blocks", "Dolls & Accessories", "Outdoor Play"],
-              products: {}
-            }
-          };
+          // Create category data with products
+          const categoryData = Object.keys(categoryStructure).slice(0, 8).map(categoryName => {
+            const cleanCategoryName = categoryName.replace(/^[^\s]+\s/, ''); // Remove emoji
+            
+            const items = categoryStructure[categoryName].subcategories.map(subCat => {
+              // Find a product matching this subcategory
+              const product = products.find(p => 
+                p.subCategory?.toLowerCase().includes(subCat.toLowerCase()) ||
+                p.category?.toLowerCase().includes(cleanCategoryName.toLowerCase())
+              );
+              
+              return {
+                name: subCat,
+                product: product || null
+              };
+            });
 
-          // Fill category products
-          products.forEach(product => {
-            if (categoryMap[product.category]) {
-              const subCat = product.subCategory;
-              if (!categoryMap[product.category].products[subCat]) {
-                categoryMap[product.category].products[subCat] = product;
-              }
-            }
+            return {
+              category: categoryName,
+              title: categoryName,
+              items: items
+            };
           });
-
-          // Convert to array
-          const categoryData = Object.keys(categoryMap).map(key => ({
-            category: key,
-            title: categoryMap[key].title,
-            items: categoryMap[key].subCategories.map(subCat => ({
-              name: subCat,
-              product: categoryMap[key].products[subCat] || null
-            }))
-          }));
 
           setCategories(categoryData);
         }
@@ -73,21 +106,23 @@ export default function CategoryCards() {
   }, []);
 
   const handleCategoryClick = (category, subCategory = null) => {
+    const cleanCategory = category.replace(/^[^\s]+\s/, '');
     if (subCategory) {
-      window.location.href = `/shop?category=${encodeURIComponent(category)}&subCategory=${encodeURIComponent(subCategory)}`;
+      window.location.href = `/shop?category=${encodeURIComponent(cleanCategory)}&subCategory=${encodeURIComponent(subCategory)}`;
     } else {
-      window.location.href = `/shop?category=${encodeURIComponent(category)}`;
+      window.location.href = `/shop?category=${encodeURIComponent(cleanCategory)}`;
     }
   };
 
   const handleExploreAll = (category) => {
-    window.location.href = `/shop?category=${encodeURIComponent(category)}`;
+    const cleanCategory = category.replace(/^[^\s]+\s/, '');
+    window.location.href = `/shop?category=${encodeURIComponent(cleanCategory)}`;
   };
 
   if (loading) {
     return (
       <div className="w-full py-12 flex justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-[#B8860B]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-orange-500"></div>
       </div>
     );
   }
@@ -109,12 +144,15 @@ export default function CategoryCards() {
               transition={{ delay: 0.1 * idx, duration: 0.5 }}
               className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden"
             >
-              {/* Card Header */}
-              <div className="p-5">
-                <h3 className="text-xl font-bold text-[#0A0A0A] mb-4 line-clamp-2">
+              {/* Orange Header */}
+              <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-4">
+                <h3 className="text-xl font-bold text-white line-clamp-1">
                   {cat.title}
                 </h3>
+              </div>
 
+              {/* Card Body */}
+              <div className="p-5">
                 {/* Product Grid - 2x2 */}
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   {cat.items.slice(0, 4).map((item, itemIdx) => (
@@ -123,7 +161,7 @@ export default function CategoryCards() {
                       onClick={() => handleCategoryClick(cat.category, item.name)}
                       className="cursor-pointer group"
                     >
-                      <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-2">
+                      <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-2 border-2 border-transparent group-hover:border-orange-400 transition-all">
                         {item.product ? (
                           <img
                             src={item.product.images?.[0] || 'https://via.placeholder.com/200'}
@@ -138,7 +176,7 @@ export default function CategoryCards() {
                           </div>
                         )}
                       </div>
-                      <p className="text-xs text-gray-700 group-hover:text-[#B8860B] transition-colors">
+                      <p className="text-xs text-gray-700 group-hover:text-orange-600 transition-colors font-medium">
                         {item.name}
                       </p>
                     </div>
@@ -148,7 +186,7 @@ export default function CategoryCards() {
                 {/* Explore All Link */}
                 <button
                   onClick={() => handleExploreAll(cat.category)}
-                  className="text-sm text-[#007185] hover:text-[#C7511F] hover:underline font-medium flex items-center gap-1 transition-colors"
+                  className="text-sm text-orange-600 hover:text-orange-700 hover:underline font-semibold flex items-center gap-1 transition-colors"
                 >
                   Explore all
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -169,7 +207,7 @@ export default function CategoryCards() {
         >
           <button
             onClick={() => window.location.href = '/shop'}
-            className="bg-[#B8860B] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#9A7209] transition-colors shadow-md hover:shadow-lg"
+            className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105"
           >
             View All Products
           </button>

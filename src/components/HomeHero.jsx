@@ -7,12 +7,12 @@ export default function HomeHero() {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [products, setProducts] = useState([]);
-  const [categoryProducts, setCategoryProducts] = useState([]);
+  const [dealProducts, setDealProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:5000';
 
-  // Main slider categories with images
+  // Hero slides
   const heroSlides = [
     {
       category: "electronics",
@@ -37,120 +37,30 @@ export default function HomeHero() {
       title: "Sports & Outdoors",
       image: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=1200",
       subtitle: "Stay active"
-    },
-    {
-      category: "books",
-      title: "Books & Media",
-      image: "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=1200",
-      subtitle: "Explore now"
-    },
-    {
-      category: "toys",
-      title: "Toys & Games",
-      image: "https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=1200",
-      subtitle: "Fun for everyone"
-    },
-    {
-      category: "beauty",
-      title: "Beauty & Personal Care",
-      image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=1200",
-      subtitle: "Look your best"
-    },
-    {
-      category: "kitchen",
-      title: "Kitchen & Dining",
-      image: "https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=1200",
-      subtitle: "Cook like a pro"
-    },
-    {
-      category: "automotive",
-      title: "Automotive",
-      image: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1200",
-      subtitle: "For your vehicle"
-    },
-    {
-      category: "pet-supplies",
-      title: "Pet Supplies",
-      image: "https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=1200",
-      subtitle: "Happy pets"
     }
   ];
 
-  // Category boxes data
-  const categoryBoxes = [
-    {
-      title: "Up to 70% off | Men's Fashion",
-      items: [
-        { name: "Polos", image: "https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?w=300", category: "fashion" },
-        { name: "Watches", image: "https://images.unsplash.com/photo-1524805444758-089113d48a6d?w=300", category: "watches" },
-        { name: "Sunglasses", image: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=300", category: "sunglasses" },
-        { name: "Shoes", image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=300", category: "shoes" }
-      ]
-    },
-    {
-      title: "Stay fit in style",
-      items: [
-        { name: "Men's shoes", image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=300", category: "mens-shoes" },
-        { name: "Women's shoes", image: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?w=300", category: "womens-shoes" },
-        { name: "Men's clothes", image: "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=300", category: "mens-clothes" },
-        { name: "Women's clothes", image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=300", category: "womens-clothes" }
-      ]
-    },
-    {
-      title: "Up to 40% off | Appliances",
-      items: [
-        { name: "Air fryers", image: "https://images.unsplash.com/photo-1585659722983-3a675dabf23d?w=300", category: "air-fryers" },
-        { name: "Air purifiers", image: "https://images.unsplash.com/photo-1617333146840-3ef047070531?w=300", category: "air-purifiers" },
-        { name: "Cookers", image: "https://images.unsplash.com/photo-1585515320310-d9a8b0b7f598?w=300", category: "cookers" },
-        { name: "Blenders", image: "https://images.unsplash.com/photo-1585515320310-d9a8b0b7f598?w=300", category: "blenders" }
-      ]
-    },
-    {
-      title: "Toys for all ages",
-      items: [
-        { name: "Learning toys", image: "https://images.unsplash.com/photo-1558877385-7e7d45c058b5?w=300", category: "learning-toys" },
-        { name: "Building blocks", image: "https://images.unsplash.com/photo-1587654780291-39c9404d746b?w=300", category: "building-blocks" },
-        { name: "Dolls", image: "https://images.unsplash.com/photo-1607305387299-a3d9611cd469?w=300", category: "dolls" },
-        { name: "Outdoor play", image: "https://images.unsplash.com/photo-1558877385-e44eb3f46a87?w=300", category: "outdoor-play" }
-      ]
-    },
-    {
-      title: "Tools & equipment",
-      items: [
-        { name: "Power tools", image: "https://images.unsplash.com/photo-1530124566582-a618bc2615dc?w=300", category: "power-tools" },
-        { name: "Pressure washer", image: "https://images.unsplash.com/photo-1617433820319-c6e3c70e3f69?w=300", category: "pressure-washer" },
-        { name: "Tool box", image: "https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=300", category: "tool-box" },
-        { name: "Tester", image: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=300", category: "tester" }
-      ]
-    },
-    {
-      title: "Shop by platform",
-      items: [
-        { name: "Xbox One", image: "https://images.unsplash.com/photo-1621259182978-fbf93132d53d?w=300", category: "xbox" },
-        { name: "PlayStation 4", image: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=300", category: "playstation" },
-        { name: "Nintendo Switch", image: "https://images.unsplash.com/photo-1578303512597-81e6cc155b3e?w=300", category: "nintendo" },
-        { name: "Gaming accessories", image: "https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?w=300", category: "gaming-accessories" }
-      ]
-    },
-    {
-      title: "Shop AmazonBasics",
-      items: [
-        { name: "Home collection", image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=300", category: "home-collection" },
-        { name: "Towels", image: "https://images.unsplash.com/photo-1585238341710-4c1ce17ab53b?w=300", category: "towels" },
-        { name: "Travel gears", image: "https://images.unsplash.com/photo-1565026057447-bc90a3dceb87?w=300", category: "travel-gears" },
-        { name: "Cables", image: "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=300", category: "cables" }
-      ]
-    },
-    {
-      title: "Your basic linens",
-      items: [
-        { name: "Bed sheets", image: "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=300", category: "bed-sheets" },
-        { name: "Mattress toppers", image: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=300", category: "mattress-toppers" },
-        { name: "Comforters", image: "https://images.unsplash.com/photo-1615799998603-7c6270a45196?w=300", category: "comforters" },
-        { name: "Printed sheets", image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=300", category: "printed-sheets" }
-      ]
-    }
-  ];
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/products`);
+        const data = await response.json();
+        
+        if (data.success && data.products) {
+          setProducts(data.products);
+          // Filter products with discount (assuming products have a discount field)
+          const deals = data.products.filter(p => p.discount && p.discount > 0);
+          setDealProducts(deals.slice(0, 3));
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -160,96 +70,181 @@ export default function HomeHero() {
   }, []);
 
   const handleSlideClick = (category) => {
-    navigate(`/categories?category=${category}`);
+    navigate(`/shop?category=${category}`);
   };
 
-  const handleCategoryItemClick = (category) => {
-    navigate(`/categories?category=${category}`);
-  };
-
-  const convertToAED = (usdPrice) => {
-    return (usdPrice * 3.67).toFixed(2);
+  const handleDealsClick = () => {
+    navigate('/shop?deals=true');
   };
 
   return (
-    <div className="bg-gray-100">
-      {/* Hero Slider */}
-      <div className="relative h-[400px] bg-gray-900 overflow-hidden">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentSlide}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1 }}
-            className="absolute inset-0 cursor-pointer"
-            onClick={() => handleSlideClick(heroSlides[currentSlide].category)}
-          >
-            <img
-              src={heroSlides[currentSlide].image}
-              alt={heroSlides[currentSlide].title}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-            <div className="absolute bottom-12 left-12">
-              <h2 className="text-5xl font-bold text-white mb-2">
-                {heroSlides[currentSlide].title}
-              </h2>
-              <p className="text-2xl text-white/90">
-                {heroSlides[currentSlide].subtitle}
-              </p>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Slide Indicators */}
-        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
-          {heroSlides.map((_, idx) => (
-            <button
-              key={idx}
-              onClick={() => setCurrentSlide(idx)}
-              className={`h-2 rounded-full transition-all ${
-                idx === currentSlide ? "bg-white w-8" : "bg-white/50 w-2"
-              }`}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Category Boxes */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {categoryBoxes.map((box, boxIdx) => (
-            <div key={boxIdx} className="bg-white rounded-lg p-6 shadow hover:shadow-lg transition">
-              <h3 className="text-xl font-bold mb-4">{box.title}</h3>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                {box.items.map((item, itemIdx) => (
-                  <div
-                    key={itemIdx}
-                    onClick={() => handleCategoryItemClick(item.category)}
-                    className="cursor-pointer group"
-                  >
-                    <div className="aspect-square overflow-hidden rounded mb-2">
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                    </div>
-                    <p className="text-sm text-center group-hover:text-blue-600">
-                      {item.name}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              <button
-                onClick={() => handleCategoryItemClick(box.items[0].category)}
-                className="text-blue-600 hover:text-orange-600 text-sm font-medium"
+    <div className="bg-gray-50">
+      {/* Hero Section - Side by Side Layout */}
+      <div className="relative h-[300px] sm:h-[400px] md:h-[500px] bg-gray-100 overflow-hidden">
+        <div className="flex h-full">
+          {/* Main Slider - 60% on Mobile, 70% on Desktop */}
+          <div className="w-[60%] sm:w-[65%] md:w-[70%] relative">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentSlide}
+                initial={{ opacity: 0, x: -50 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 50 }}
+                transition={{ duration: 0.8 }}
+                className="absolute inset-0 cursor-pointer"
+                onClick={() => handleSlideClick(heroSlides[currentSlide].category)}
               >
-                Explore all →
-              </button>
+                <img
+                  src={heroSlides[currentSlide].image}
+                  alt={heroSlides[currentSlide].title}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-transparent" />
+                <div className="absolute bottom-3 sm:bottom-6 md:bottom-12 left-3 sm:left-6 md:left-12 right-3 sm:right-6 md:right-auto">
+                  <motion.h2 
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className="text-xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-1 sm:mb-2 md:mb-3 drop-shadow-2xl line-clamp-2"
+                  >
+                    {heroSlides[currentSlide].title}
+                  </motion.h2>
+                  <motion.p 
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    className="text-sm sm:text-xl md:text-2xl lg:text-3xl text-white/95 drop-shadow-lg mb-2 sm:mb-3 md:mb-4"
+                  >
+                    {heroSlides[currentSlide].subtitle}
+                  </motion.p>
+                  <motion.button
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.5 }}
+                    className="px-4 sm:px-6 md:px-8 py-1.5 sm:py-2 md:py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg hover:from-orange-600 hover:to-orange-700 transform hover:scale-105 transition-all shadow-lg text-xs sm:text-sm md:text-base"
+                  >
+                    Shop Now
+                  </motion.button>
+                </div>
+              </motion.div>
+            </AnimatePresence>
+
+            {/* Slide Indicators */}
+            <div className="absolute bottom-2 sm:bottom-3 md:bottom-6 left-1/2 transform -translate-x-1/2 flex gap-1 sm:gap-2 z-10">
+              {heroSlides.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentSlide(idx)}
+                  className={`h-1.5 sm:h-2 rounded-full transition-all ${
+                    idx === currentSlide ? "bg-white w-6 sm:w-8 md:w-10" : "bg-white/50 w-1.5 sm:w-2"
+                  }`}
+                />
+              ))}
             </div>
-          ))}
+          </div>
+
+          {/* Deals Section - 40% on Mobile, 30% on Desktop - Always Visible */}
+          <div 
+            className="w-[40%] sm:w-[35%] md:w-[30%] bg-gradient-to-br from-orange-500 via-orange-600 to-red-600 relative overflow-hidden cursor-pointer group"
+            onClick={handleDealsClick}
+          >
+            {/* Animated Background Pattern */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-5 right-5 md:top-10 md:right-10 w-20 h-20 md:w-40 md:h-40 bg-white rounded-full blur-3xl animate-pulse"></div>
+              <div className="absolute bottom-5 left-5 md:bottom-10 md:left-10 w-24 h-24 md:w-60 md:h-60 bg-yellow-300 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+            </div>
+
+            {/* Content */}
+            <div className="relative h-full flex flex-col items-center justify-center p-2 sm:p-4 md:p-8 text-white">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ duration: 0.6, type: "spring" }}
+                className="text-center"
+              >
+                {/* Mega Percentage Badge */}
+                <div className="relative mb-2 sm:mb-3 md:mb-6">
+                  <motion.div
+                    animate={{ rotate: [0, 5, -5, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="bg-white text-orange-600 rounded-full w-16 h-16 sm:w-24 sm:h-24 md:w-40 md:h-40 flex items-center justify-center shadow-2xl transform group-hover:scale-110 transition-transform mx-auto"
+                  >
+                    <div className="text-center">
+                      <div className="text-2xl sm:text-4xl md:text-6xl font-black leading-none">70</div>
+                      <div className="text-sm sm:text-2xl md:text-4xl font-bold leading-none">% OFF</div>
+                    </div>
+                  </motion.div>
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 bg-yellow-400 text-orange-600 rounded-full w-8 h-8 sm:w-12 sm:h-12 md:w-16 md:h-16 flex items-center justify-center font-black text-[8px] sm:text-[10px] md:text-sm shadow-lg"
+                  >
+                    UP TO
+                  </motion.div>
+                </div>
+
+                <h3 className="text-sm sm:text-xl md:text-3xl font-bold mb-1 sm:mb-2 md:mb-3 drop-shadow-lg">
+                  MEGA DEALS
+                </h3>
+                <p className="text-xs sm:text-sm md:text-xl mb-2 sm:mb-3 md:mb-6 font-medium opacity-95">
+                  Limited Time!
+                </p>
+
+                {/* Deal Products Preview - Hide on Small Mobile, Show on Tablet+ */}
+                {dealProducts.length > 0 && (
+                  <div className="hidden sm:grid grid-cols-2 md:grid-cols-3 gap-1 md:gap-2 mb-3 md:mb-6">
+                    {dealProducts.slice(0, 3).map((product, idx) => (
+                      <motion.div
+                        key={idx}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 * idx }}
+                        className="bg-white/20 backdrop-blur-sm rounded-lg p-1 md:p-2"
+                      >
+                        <img
+                          src={product.images?.[0] || 'https://via.placeholder.com/100'}
+                          alt={product.name}
+                          className="w-full h-10 sm:h-12 md:h-16 object-cover rounded"
+                        />
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="bg-white text-orange-600 px-3 sm:px-6 md:px-8 py-1.5 sm:py-2 md:py-3 rounded-full font-bold text-[10px] sm:text-sm md:text-lg shadow-xl hover:shadow-2xl transition-all"
+                >
+                  <span className="hidden sm:inline">Shop Deals Now →</span>
+                  <span className="sm:hidden">Shop Now →</span>
+                </motion.button>
+
+                {/* Floating Elements - Smaller on Mobile */}
+                <motion.div
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                  className="absolute top-2 sm:top-4 md:top-8 left-2 sm:left-4 md:left-8 text-2xl sm:text-4xl md:text-6xl opacity-20"
+                >
+                  🎁
+                </motion.div>
+                <motion.div
+                  animate={{ y: [0, 10, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, delay: 1 }}
+                  className="absolute bottom-2 sm:bottom-4 md:bottom-8 right-2 sm:right-4 md:right-8 text-2xl sm:text-4xl md:text-6xl opacity-20"
+                >
+                  ⚡
+                </motion.div>
+              </motion.div>
+            </div>
+
+            {/* Pulsing Border Effect */}
+            <motion.div
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute inset-0 border md:border-2 lg:border-4 border-yellow-300 pointer-events-none"
+            />
+          </div>
         </div>
       </div>
     </div>
