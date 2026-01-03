@@ -1,12 +1,15 @@
 // ==========================================
 // 📁 FILE 2: src/api/productApi.js - FIXED
 // ==========================================
-const API_BASE_URL2 = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+// ✅ FIXED: Use correct environment variable for Vite
+const API_BASE_URL2 = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 export const productApi = {
   // Get all products
   getAllProducts: async () => {
     try {
+      console.log('🔍 Fetching all products from:', `${API_BASE_URL2}/api/products`);
       const response = await fetch(`${API_BASE_URL2}/api/products`);
       if (!response.ok) throw new Error('Failed to fetch products');
       return await response.json();
@@ -19,6 +22,7 @@ export const productApi = {
   // Get single product by ID
   getProductById: async (id) => {
     try {
+      console.log('🔍 Fetching product by ID:', `${API_BASE_URL2}/api/products/${id}`);
       const response = await fetch(`${API_BASE_URL2}/api/products/${id}`);
       if (!response.ok) throw new Error('Failed to fetch product');
       return await response.json();

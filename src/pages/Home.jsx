@@ -1,4 +1,4 @@
-// ✅ src/pages/Home.jsx
+// ✅ src/pages/Home.jsx - FIXED VERSION
 import React, { useState, useMemo, useEffect } from "react";
 import HomeHero from "../components/HomeHero";
 import CategoryCards from "../components/CategoryCards";
@@ -13,7 +13,8 @@ export default function Home() {
   const [visitedProducts, setVisitedProducts] = useState([]);
   const [dealsIndex, setDealsIndex] = useState(0);
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  // ✅ FIXED: Use correct environment variable for Vite
+  const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
   // Fetch products
   const fetchProducts = async () => {
@@ -41,7 +42,48 @@ export default function Home() {
       }
     } catch (err) {
       console.error("❌ Error fetching products:", err);
-      setError("Failed to load products. Please make sure the server is running.");
+      setError("Failed to connect to server. Please try again later.");
+      
+      // ✅ OPTIONAL: Show mock/demo products if API fails
+      console.warn("🔧 Using demo products for testing");
+      setProducts([
+        {
+          _id: 'demo1',
+          name: 'Sample T-Shirt',
+          price: 29.99,
+          images: ['https://via.placeholder.com/300/FF6B35/FFFFFF?text=T-Shirt'],
+          category: 'Clothing',
+          discount: 20,
+          stock: 10
+        },
+        {
+          _id: 'demo2',
+          name: 'Sample Jeans',
+          price: 59.99,
+          images: ['https://via.placeholder.com/300/4ECDC4/FFFFFF?text=Jeans'],
+          category: 'Clothing',
+          discount: 0,
+          stock: 5
+        },
+        {
+          _id: 'demo3',
+          name: 'Sample Watch',
+          price: 199.99,
+          images: ['https://via.placeholder.com/300/1A535C/FFFFFF?text=Watch'],
+          category: 'Accessories',
+          discount: 30,
+          stock: 8
+        },
+        {
+          _id: 'demo4',
+          name: 'Sample Shoes',
+          price: 89.99,
+          images: ['https://via.placeholder.com/300/FFE66D/333333?text=Shoes'],
+          category: 'Footwear',
+          discount: 15,
+          stock: 12
+        }
+      ]);
     } finally {
       setLoading(false);
     }
@@ -129,10 +171,10 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-gradient-to-b from-[#FAF8F5] via-[#F8F5F0] to-[#F3EFEA] flex items-center justify-center">
         <div className="text-center max-w-md mx-auto px-4">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-4">
-            <p className="text-red-600 text-lg mb-2">⚠️ {error}</p>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-4">
+            <p className="text-yellow-800 text-lg mb-2">⚠️ {error}</p>
             <p className="text-sm text-gray-600">
-              Make sure your backend server is running on port 5000
+              Showing demo products. The real products will appear once the backend is connected.
             </p>
           </div>
           <button

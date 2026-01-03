@@ -1,4 +1,4 @@
-// src/pages/Cart.jsx - Amazon-Style Advanced Cart
+// src/pages/Cart.jsx - FIXED VERSION
 import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { CartContext } from '../context/CartContext';
@@ -13,6 +13,9 @@ export default function Cart() {
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [relatedProducts, setRelatedProducts] = useState([]);
 
+  // ✅ FIXED: Use correct environment variable for Vite
+  const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+
   useEffect(() => {
     // Fetch recently viewed products from localStorage
     const viewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
@@ -24,7 +27,7 @@ export default function Cart() {
 
   const fetchRelatedProducts = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/products?limit=6&featured=true');
+      const response = await fetch(`${API_URL}/api/products?limit=6&featured=true`);
       const data = await response.json();
       setRelatedProducts(data.products || []);
     } catch (error) {

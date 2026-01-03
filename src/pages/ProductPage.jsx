@@ -1,4 +1,4 @@
-// src/pages/ProductDetail.jsx - MOBILE FIRST COMPLETE VERSION
+// src/pages/ProductDetail.jsx - COMPLETE FIXED VERSION
 import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { CartContext } from "../context/CartContext";
@@ -29,7 +29,8 @@ export default function ProductDetail() {
     specs: false
   });
 
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  // ✅ FIXED: Use correct environment variable for Vite
+  const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
   useEffect(() => {
     fetchProduct();
@@ -179,7 +180,7 @@ export default function ProductDetail() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile: Breadcrumb */}
-      <div className="bg-white border-b px-4 py-2">
+      <div className="bg-white border-b px-4 py-2 lg:hidden">
         <div className="flex items-center gap-2 text-xs text-gray-600 overflow-x-auto whitespace-nowrap">
           <button onClick={() => navigate('/')} className="hover:text-orange-600">Home</button>
           <span>/</span>
@@ -190,7 +191,7 @@ export default function ProductDetail() {
       </div>
 
       {/* Mobile: Image Gallery */}
-      <div className="bg-white p-4">
+      <div className="bg-white p-4 lg:hidden">
         {/* Badges */}
         <div className="flex flex-wrap gap-2 mb-3">
           {product.bestSeller && (
@@ -222,7 +223,7 @@ export default function ProductDetail() {
         {/* Main Image */}
         <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-3">
           <img
-            src={product.images[selectedImage] || 'https://via.placeholder.com/600'}
+            src={product.images?.[selectedImage] || 'https://via.placeholder.com/600'}
             alt={product.name}
             className="w-full h-full object-contain"
           />
@@ -230,7 +231,7 @@ export default function ProductDetail() {
 
         {/* Thumbnails */}
         <div className="flex gap-2 overflow-x-auto pb-2">
-          {product.images.map((img, idx) => (
+          {product.images?.map((img, idx) => (
             <button
               key={idx}
               onClick={() => setSelectedImage(idx)}
@@ -245,14 +246,16 @@ export default function ProductDetail() {
       </div>
 
       {/* Mobile: Product Info */}
-      <div className="bg-white mt-2 p-4">
+      <div className="bg-white mt-2 p-4 lg:hidden">
         {/* Brand */}
-        <button
-          onClick={() => navigate(`/shop?brand=${product.brand}`)}
-          className="text-sm text-orange-600 hover:underline mb-2 block"
-        >
-          Visit the {product.brand} Store
-        </button>
+        {product.brand && (
+          <button
+            onClick={() => navigate(`/shop?brand=${product.brand}`)}
+            className="text-sm text-orange-600 hover:underline mb-2 block"
+          >
+            Visit the {product.brand} Store
+          </button>
+        )}
 
         {/* Title */}
         <h1 className="text-lg font-bold text-gray-900 mb-3">{product.name}</h1>
@@ -260,13 +263,13 @@ export default function ProductDetail() {
         {/* Rating & Reviews */}
         <div className="flex items-center gap-2 mb-2">
           <div className="flex items-center gap-1">
-            {renderStars(product.rating)}
+            {renderStars(product.rating || 0)}
             <span className="text-sm font-semibold text-gray-700 ml-1">
-              {product.rating}
+              {product.rating || 0}
             </span>
           </div>
           <button className="text-xs text-blue-600 hover:underline">
-            {product.reviewCount} ratings
+            {product.reviewCount || 0} ratings
           </button>
         </div>
 
@@ -375,7 +378,7 @@ export default function ProductDetail() {
             onChange={(e) => setQuantity(parseInt(e.target.value))}
             className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 text-base"
           >
-            {[...Array(Math.min(10, product.stock))].map((_, i) => (
+            {[...Array(Math.min(10, product.stock || 10))].map((_, i) => (
               <option key={i + 1} value={i + 1}>Qty: {i + 1}</option>
             ))}
           </select>
@@ -434,7 +437,7 @@ export default function ProductDetail() {
 
       {/* About This Item */}
       {product.features && product.features.length > 0 && (
-        <div className="bg-white mt-2 p-4">
+        <div className="bg-white mt-2 p-4 lg:hidden">
           <button
             onClick={() => toggleSection('features')}
             className="w-full flex items-center justify-between mb-3"
@@ -458,7 +461,7 @@ export default function ProductDetail() {
 
       {/* Product Description */}
       {product.description && (
-        <div className="bg-white mt-2 p-4">
+        <div className="bg-white mt-2 p-4 lg:hidden">
           <h2 className="text-lg font-bold text-gray-900 mb-3">Product Description</h2>
           <p className={`text-sm text-gray-700 leading-relaxed ${showFullDescription ? '' : 'line-clamp-4'}`}>
             {product.description}
@@ -476,7 +479,7 @@ export default function ProductDetail() {
 
       {/* Technical Details */}
       {allSpecs.length > 0 && (
-        <div className="bg-white mt-2 p-4">
+        <div className="bg-white mt-2 p-4 lg:hidden">
           <button
             onClick={() => toggleSection('details')}
             className="w-full flex items-center justify-between mb-3"
@@ -505,7 +508,7 @@ export default function ProductDetail() {
       )}
 
       {/* Additional Information */}
-      <div className="bg-white mt-2 p-4">
+      <div className="bg-white mt-2 p-4 lg:hidden">
         <h3 className="text-lg font-bold text-gray-900 mb-3">Product Information</h3>
         <div className="space-y-3 text-sm">
           <div className="flex justify-between">
@@ -559,13 +562,13 @@ export default function ProductDetail() {
               </div>
               <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4">
                 <img
-                  src={product.images[selectedImage]}
+                  src={product.images?.[selectedImage] || 'https://via.placeholder.com/600'}
                   alt={product.name}
                   className="w-full h-full object-contain"
                 />
               </div>
               <div className="grid grid-cols-6 gap-2">
-                {product.images.map((img, idx) => (
+                {product.images?.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImage(idx)}
@@ -583,23 +586,25 @@ export default function ProductDetail() {
           {/* Middle: Info */}
           <div className="col-span-4">
             <div className="bg-white rounded-lg p-6">
-              <button
-                onClick={() => navigate(`/shop?brand=${product.brand}`)}
-                className="text-sm text-orange-600 hover:underline mb-2 block"
-              >
-                Visit the {product.brand} Store
-              </button>
+              {product.brand && (
+                <button
+                  onClick={() => navigate(`/shop?brand=${product.brand}`)}
+                  className="text-sm text-orange-600 hover:underline mb-2 block"
+                >
+                  Visit the {product.brand} Store
+                </button>
+              )}
               <h1 className="text-2xl font-bold text-gray-900 mb-3">{product.name}</h1>
               
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex items-center gap-1">
-                  {renderStars(product.rating)}
+                  {renderStars(product.rating || 0)}
                   <span className="text-sm font-semibold text-gray-700 ml-2">
-                    {product.rating}
+                    {product.rating || 0}
                   </span>
                 </div>
                 <button className="text-sm text-blue-600 hover:underline">
-                  {product.reviewCount} ratings
+                  {product.reviewCount || 0} ratings
                 </button>
               </div>
 
@@ -683,6 +688,56 @@ export default function ProductDetail() {
                 )}
               </div>
 
+              {/* Color Selection */}
+              {product.colors && product.colors.length > 0 && (
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Color: {selectedColor?.name}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {product.colors.map((color, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedColor(color)}
+                        className={`w-10 h-10 rounded-lg border-2 overflow-hidden ${
+                          selectedColor?.name === color.name ? 'border-orange-500 ring-2 ring-orange-300' : 'border-gray-300'
+                        }`}
+                      >
+                        {color.image ? (
+                          <img src={color.image} alt={color.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full" style={{ backgroundColor: color.name.toLowerCase() }} />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Variants */}
+              {product.variants && product.variants.length > 0 && (
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    {product.variants[0].name}: {selectedVariant?.value || 'Select'}
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {product.variants.map((variant, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedVariant(variant)}
+                        className={`px-3 py-2 rounded-lg border-2 text-sm font-medium ${
+                          selectedVariant?.value === variant.value
+                            ? 'border-orange-500 bg-orange-50 text-orange-600'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                      >
+                        {variant.value}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="mb-4">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">Quantity:</label>
                 <select
@@ -690,7 +745,7 @@ export default function ProductDetail() {
                   onChange={(e) => setQuantity(parseInt(e.target.value))}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500"
                 >
-                  {[...Array(Math.min(10, product.stock))].map((_, i) => (
+                  {[...Array(Math.min(10, product.stock || 10))].map((_, i) => (
                     <option key={i + 1} value={i + 1}>{i + 1}</option>
                   ))}
                 </select>
@@ -710,7 +765,7 @@ export default function ProductDetail() {
                   navigate('/cart');
                 }}
                 disabled={product.stock === 0}
-                className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-3 rounded-lg transition disabled:opacity-50"
+                className="w-full bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold py-3 rounded-lg transition disabled:opacity-50 mb-4"
               >
                 Buy Now
               </button>

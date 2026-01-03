@@ -1,7 +1,9 @@
-// ✅ src/api/cartApi.js
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+// ==========================================
+// 📁 FILE 1: src/api/cartApi.js - FIXED
+// ==========================================
 
-// Create Stripe checkout session
+// ✅ FIXED: Use correct environment variable for Vite
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 export const cartApi = {
   
@@ -11,6 +13,7 @@ export const cartApi = {
       console.log('🔑 Token:', token ? token.substring(0, 30) + '...' : 'NONE');
       console.log('📦 Items:', cartItems);
       console.log('📍 Shipping:', shippingInfo);
+      console.log('🌐 API URL:', `${API_BASE_URL}/api/orders/create-checkout-session`);
       
       const response = await fetch(`${API_BASE_URL}/api/orders/create-checkout-session`, {
         method: 'POST',
