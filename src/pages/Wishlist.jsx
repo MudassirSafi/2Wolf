@@ -1,6 +1,12 @@
+// ==========================================
+// 📁 FILE 3: src/pages/Wishlist.jsx - FIXED
+// ==========================================
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+
+// ✅ FIXED: Changed from hardcoded localhost to environment variable
+const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
 const Wishlist = () => {
   const navigate = useNavigate();
@@ -18,11 +24,14 @@ const Wishlist = () => {
       const token = localStorage.getItem('token');
       
       if (!token) {
+        console.log("⚠️ No token - user not logged in");
         setLoading(false);
         return;
       }
 
-      const response = await fetch('http://localhost:5000/api/wishlist', {
+      console.log("🔍 Fetching wishlist from:", `${API_URL}/api/wishlist`);
+
+      const response = await fetch(`${API_URL}/api/wishlist`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -30,10 +39,14 @@ const Wishlist = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setWishlistItems(data);
+        const items = data.items || data || [];
+        setWishlistItems(items);
+        console.log("✅ Wishlist fetched:", items.length, "items");
+      } else {
+        console.error("❌ Failed to fetch wishlist. Status:", response.status);
       }
     } catch (error) {
-      console.error('Error fetching wishlist:', error);
+      console.error('❌ Error fetching wishlist:', error);
     } finally {
       setLoading(false);
     }
@@ -42,7 +55,9 @@ const Wishlist = () => {
   const removeFromWishlist = async (productId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/wishlist/${productId}`, {
+      console.log("➖ Removing product from wishlist:", productId);
+      
+      const response = await fetch(`${API_URL}/api/wishlist/remove/${productId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -51,9 +66,17 @@ const Wishlist = () => {
 
       if (response.ok) {
         setWishlistItems(wishlistItems.filter(item => item._id !== productId));
+        
+        // Update wishlist count
+        localStorage.setItem('wishlistCount', (wishlistItems.length - 1).toString());
+        window.dispatchEvent(new Event('wishlistUpdated'));
+        
+        console.log("✅ Removed from wishlist successfully");
+      } else {
+        console.error("❌ Failed to remove from wishlist. Status:", response.status);
       }
     } catch (error) {
-      console.error('Error removing from wishlist:', error);
+      console.error('❌ Error removing from wishlist:', error);
     }
   };
 
@@ -86,7 +109,7 @@ const Wishlist = () => {
           <h2 className="text-2xl font-bold text-gray-800 mb-3">Login Required</h2>
           <p className="text-gray-600 mb-6">Please login to view your wishlist</p>
           <button
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/signin')}
             className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors w-full font-medium"
           >
             Login Now
@@ -178,15 +201,15 @@ const Wishlist = () => {
                       {product.discount > 0 ? (
                         <div className="flex items-center gap-2">
                           <span className="text-2xl font-bold text-orange-500">
-                            ${(product.price * (1 - product.discount / 100)).toFixed(2)}
+                            AED {(product.price * (1 - product.discount / 100)).toFixed(2)}
                           </span>
                           <span className="text-sm text-gray-400 line-through">
-                            ${product.price.toFixed(2)}
+                            AED {product.price.toFixed(2)}
                           </span>
                         </div>
                       ) : (
                         <span className="text-2xl font-bold text-orange-500">
-                          ${product.price.toFixed(2)}
+                          AED {product.price.toFixed(2)}
                         </span>
                       )}
                     </div>

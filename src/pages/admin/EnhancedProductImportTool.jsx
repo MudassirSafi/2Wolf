@@ -1,4 +1,4 @@
-// pages/admin/EnhancedProductImportTool.jsx
+// pages/admin/EnhancedProductImportTool.jsx - UPDATED WITH VIDEO SUPPORT
 import React, { useState, useEffect } from 'react';
 import AdminLayout from './AdminLayout';
 import ManualEntryMethod from '../../components/admin/import-methods/ManualEntryMethod';
@@ -18,7 +18,7 @@ const EnhancedProductImportTool = () => {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [categories, setCategories] = useState([]);
   const [customCategories, setCustomCategories] = useState([]);
-  const [imageInputs, setImageInputs] = useState(['']);
+  const [imageInputs, setImageInputs] = useState(['', '', '', '', '', '', '', '', '', '']); // ✅ 10 images
   const [previewImages, setPreviewImages] = useState([]);
   const [generatedSKU, setGeneratedSKU] = useState('');
   const [generatedID, setGeneratedID] = useState('');
@@ -33,6 +33,7 @@ const EnhancedProductImportTool = () => {
     subCategory: '',
     brand: '2Wolf',
     images: [],
+    videos: [], // ✅ NEW: Videos array
     description: '',
     discount: 0,
     featured: false,
@@ -77,45 +78,169 @@ const EnhancedProductImportTool = () => {
   const [pastedText, setPastedText] = useState('');
   const [aiPrompt, setAiPrompt] = useState('');
 
+  // ✅ UPDATED: More brands added to each category
   const defaultCategories = {
     "Electronics": {
       subcategories: ["Computers & Laptops", "Mobile Phones & Tablets", "Cameras & Photography", "Audio & Headphones", "TVs & Home Theater", "Gaming Consoles & Accessories", "Wearable Technology", "Smart Home Devices"],
-      brands: ["Samsung", "Apple", "Sony", "LG", "Dell", "HP", "Lenovo", "ASUS", "Huawei", "Xiaomi", "2Wolf"],
+      brands: [
+        "Samsung", "Apple", "Sony", "LG", "Dell", "HP", "Lenovo", "ASUS", 
+        "Huawei", "Xiaomi", "OnePlus", "Oppo", "Vivo", "Realme", "Nokia",
+        "Microsoft", "Acer", "MSI", "Razer", "Alienware", "Canon", "Nikon",
+        "Panasonic", "TCL", "Hisense", "Philips", "Bose", "JBL", "Beats",
+        "Sennheiser", "Audio-Technica", "Logitech", "Corsair", "SteelSeries",
+        "HyperX", "Google", "Amazon", "Roku", "Nvidia", "AMD", "Intel",
+        "Fitbit", "Garmin", "Fossil", "TicWatch", "Amazfit", "2Wolf"
+      ],
       fields: ["processor", "ram", "storage", "screenSize", "color", "weight", "dimensions", "warranty"]
     },
     "Home & Kitchen": {
-      subcategories: ["Hair Dryers", "Hair Straighteners", "Hair Curlers", "Shavers & Trimmers", "Electric Toothbrushes", "Coffee Makers", "Blenders & Mixers", "Air Fryers", "Microwave Ovens", "Refrigerators", "Vacuum Cleaners", "Water Purifiers", "Cookware Sets", "Kitchen Appliances", "Pressure Cookers", "Rice Cookers", "Juicers", "Food Processors"],
-      brands: ["BLACK+DECKER", "Philips", "NINJA", "Braun", "Panasonic", "Kenwood", "Tefal", "Moulinex", "Remington", "Babyliss", "2Wolf"],
+      subcategories: [
+        "Hair Dryers", "Hair Straighteners", "Hair Curlers", "Shavers & Trimmers", 
+        "Electric Toothbrushes", "Coffee Makers", "Blenders & Mixers", "Air Fryers", 
+        "Microwave Ovens", "Refrigerators", "Vacuum Cleaners", "Water Purifiers", 
+        "Cookware Sets", "Kitchen Appliances", "Pressure Cookers", "Rice Cookers", 
+        "Juicers", "Food Processors", "Dishwashers", "Washing Machines", "Dryers"
+      ],
+      brands: [
+        "BLACK+DECKER", "Philips", "NINJA", "Braun", "Panasonic", "Kenwood", 
+        "Tefal", "Moulinex", "Remington", "Babyliss", "Dyson", "Shark",
+        "iRobot", "Roomba", "Bosch", "Siemens", "Electrolux", "Whirlpool",
+        "KitchenAid", "Cuisinart", "Hamilton Beach", "Oster", "Breville",
+        "Instant Pot", "Crock-Pot", "De'Longhi", "Nespresso", "Keurig",
+        "Ninja Foodi", "PowerXL", "NutriBullet", "Vitamix", "Blendtec",
+        "Hoover", "Bissell", "Eureka", "Dirt Devil", "Miele", "Rowenta",
+        "T-fal", "Farberware", "Calphalon", "All-Clad", "Lodge", "2Wolf"
+      ],
       fields: ["capacity", "powerWattage", "voltage", "material", "color", "weight", "dimensions", "warranty"]
     },
     "Fashion": {
-      subcategories: ["Men's Clothing", "Women's Clothing", "Men's Shoes", "Women's Shoes", "Kids' Clothing", "Kids' Shoes", "Bags & Luggage", "Sunglasses", "Belts & Accessories", "Jewelry", "Hats & Caps"],
-      brands: ["Nike", "Adidas", "Puma", "Zara", "H&M", "Levi's", "Gap", "Tommy Hilfiger", "Calvin Klein", "Ralph Lauren", "2Wolf"],
+      subcategories: [
+        "Men's Clothing", "Women's Clothing", "Men's Shoes", "Women's Shoes", 
+        "Kids' Clothing", "Kids' Shoes", "Bags & Luggage", "Sunglasses", 
+        "Belts & Accessories", "Jewelry", "Hats & Caps", "Scarves & Shawls",
+        "Activewear", "Swimwear", "Formal Wear", "Casual Wear"
+      ],
+      brands: [
+        "Nike", "Adidas", "Puma", "Zara", "H&M", "Levi's", "Gap", 
+        "Tommy Hilfiger", "Calvin Klein", "Ralph Lauren", "Gucci", "Prada",
+        "Louis Vuitton", "Versace", "Armani", "Dolce & Gabbana", "Burberry",
+        "Michael Kors", "Coach", "Kate Spade", "Fossil", "Guess", "Lacoste",
+        "Hugo Boss", "Diesel", "Vans", "Converse", "New Balance", "Reebok",
+        "Under Armour", "Skechers", "Clarks", "Timberland", "Dr. Martens",
+        "UGG", "Crocs", "Birkenstock", "Hush Puppies", "Ecco", "Geox",
+        "Mango", "Forever 21", "American Eagle", "Abercrombie & Fitch",
+        "Hollister", "Uniqlo", "Massimo Dutti", "Pull&Bear", "Bershka",
+        "Stradivarius", "Topshop", "Topman", "Superdry", "Jack & Jones",
+        "Only", "Vero Moda", "Selected", "Esprit", "Next", "Marks & Spencer",
+        "2Wolf"
+      ],
       fields: ["size", "color", "material", "gender", "fit", "pattern", "weight"]
     },
     "Watches": {
-      subcategories: ["Men's Watches", "Women's Watches", "Smart Watches", "Sports Watches", "Luxury Watches", "Kids' Watches", "Digital Watches", "Analog Watches", "Chronograph Watches"],
-      brands: ["Casio", "Fossil", "Tommy Hilfiger", "Diesel", "Titan", "Timex", "Seiko", "Citizen", "Rolex", "Omega", "Apple", "Samsung", "Garmin", "Fitbit", "2Wolf"],
+      subcategories: [
+        "Men's Watches", "Women's Watches", "Smart Watches", "Sports Watches", 
+        "Luxury Watches", "Kids' Watches", "Digital Watches", "Analog Watches", 
+        "Chronograph Watches", "Dive Watches", "Pilot Watches"
+      ],
+      brands: [
+        "Casio", "Fossil", "Tommy Hilfiger", "Diesel", "Titan", "Timex", 
+        "Seiko", "Citizen", "Rolex", "Omega", "Apple", "Samsung", "Garmin", 
+        "Fitbit", "Tag Heuer", "Breitling", "IWC", "Patek Philippe", "Audemars Piguet",
+        "Cartier", "Bulgari", "Hublot", "Panerai", "Jaeger-LeCoultre", "Vacheron Constantin",
+        "A. Lange & Söhne", "Blancpain", "Chopard", "Piaget", "Richard Mille",
+        "Tissot", "Longines", "Hamilton", "Oris", "Rado", "Mido", "Certina",
+        "Swatch", "Flik Flak", "Orient", "Bulova", "Invicta", "Movado",
+        "Michael Kors", "Daniel Wellington", "MVMT", "Nixon", "G-Shock",
+        "Amazfit", "Huawei Watch", "TicWatch", "Withings", "Polar", "Suunto",
+        "2Wolf"
+      ],
       fields: ["movement", "bandMaterial", "caseStyle", "waterResistance", "gender", "color", "weight", "warranty"]
     },
     "Telecommunications": {
-      subcategories: ["Landline Phones", "Cordless Phones", "Conference Phones", "Phone Accessories", "Answering Machines", "Caller ID Phones", "VoIP Phones"],
-      brands: ["Panasonic", "Philips", "Gigaset", "Motorola", "VTech", "AT&T", "Uniden", "2Wolf"],
+      subcategories: [
+        "Landline Phones", "Cordless Phones", "Conference Phones", 
+        "Phone Accessories", "Answering Machines", "Caller ID Phones", 
+        "VoIP Phones", "Intercom Systems", "Telephone Cables"
+      ],
+      brands: [
+        "Panasonic", "Philips", "Gigaset", "Motorola", "VTech", "AT&T", 
+        "Uniden", "BT", "Alcatel", "Siemens", "Polycom", "Cisco", "Avaya",
+        "Yealink", "Grandstream", "Snom", "Fanvil", "Htek", "Plantronics",
+        "Jabra", "Logitech", "Konftel", "ClearOne", "2Wolf"
+      ],
       fields: ["color", "material", "weight", "dimensions", "warranty"]
     },
     "Sports & Outdoors": {
-      subcategories: ["Exercise Equipment", "Outdoor Recreation", "Team Sports", "Cycling", "Camping & Hiking", "Fitness Trackers", "Yoga & Pilates", "Swimming"],
-      brands: ["Nike", "Adidas", "Under Armour", "Reebok", "Puma", "The North Face", "Columbia", "2Wolf"],
+      subcategories: [
+        "Exercise Equipment", "Outdoor Recreation", "Team Sports", "Cycling", 
+        "Camping & Hiking", "Fitness Trackers", "Yoga & Pilates", "Swimming",
+        "Running", "Golf", "Tennis", "Basketball", "Football", "Cricket"
+      ],
+      brands: [
+        "Nike", "Adidas", "Under Armour", "Reebok", "Puma", "The North Face", 
+        "Columbia", "Patagonia", "Arc'teryx", "Marmot", "Mountain Hardwear",
+        "REI", "Osprey", "Deuter", "Gregory", "Kelty", "Big Agnes", "MSR",
+        "Black Diamond", "Petzl", "Camp", "Wild Country", "DMM", "Mammut",
+        "Salomon", "Merrell", "Keen", "La Sportiva", "Scarpa", "Asolo",
+        "Lowa", "Vasque", "Oboz", "Altra", "Hoka One One", "Brooks",
+        "Saucony", "New Balance", "Mizuno", "Asics", "Garmin", "Polar",
+        "Suunto", "TomTom", "Wahoo", "Stages", "SRM", "PowerTap",
+        "Specialized", "Trek", "Giant", "Cannondale", "Scott", "Merida",
+        "Bianchi", "Cervelo", "Pinarello", "Colnago", "Look", "Shimano",
+        "SRAM", "Campagnolo", "Wilson", "Spalding", "Rawlings", "Easton",
+        "Louisville Slugger", "DeMarini", "Babolat", "Head", "Yonex",
+        "Prince", "Dunlop", "Penn", "Titleist", "Callaway", "TaylorMade",
+        "Ping", "Cobra", "Mizuno Golf", "2Wolf"
+      ],
       fields: ["size", "color", "material", "gender", "weight", "warranty"]
     },
     "Beauty & Personal Care": {
-      subcategories: ["Skincare", "Makeup", "Hair Care", "Fragrances", "Personal Care Appliances", "Nail Care", "Bath & Body", "Men's Grooming"],
-      brands: ["L'Oreal", "Maybelline", "Nivea", "Dove", "Garnier", "Olay", "Neutrogena", "Clinique", "2Wolf"],
+      subcategories: [
+        "Skincare", "Makeup", "Hair Care", "Fragrances", "Personal Care Appliances", 
+        "Nail Care", "Bath & Body", "Men's Grooming", "Oral Care", "Shaving & Hair Removal"
+      ],
+      brands: [
+        "L'Oreal", "Maybelline", "Nivea", "Dove", "Garnier", "Olay", "Neutrogena", 
+        "Clinique", "Estée Lauder", "Lancôme", "MAC", "Bobbi Brown", "NARS",
+        "Urban Decay", "Too Faced", "Anastasia Beverly Hills", "Benefit", "Tarte",
+        "Stila", "Smashbox", "bareMinerals", "IT Cosmetics", "NYX", "ColourPop",
+        "e.l.f.", "Wet n Wild", "Revlon", "CoverGirl", "Rimmel", "Bourjois",
+        "Max Factor", "Sally Hansen", "OPI", "Essie", "China Glaze", "Zoya",
+        "Pantene", "Head & Shoulders", "Herbal Essences", "TRESemmé", "Aussie",
+        "Sunsilk", "Schwarzkopf", "Wella", "Redken", "Paul Mitchell", "Matrix",
+        "Joico", "Kerastase", "Moroccanoil", "Living Proof", "Aveda", "Bumble and bumble",
+        "The Body Shop", "Bath & Body Works", "Victoria's Secret", "Lush",
+        "Kiehl's", "Origins", "Fresh", "Tatcha", "Drunk Elephant", "The Ordinary",
+        "CeraVe", "Cetaphil", "La Roche-Posay", "Vichy", "Bioderma", "Eucerin",
+        "Aveeno", "St. Ives", "Simple", "Pond's", "Vaseline", "Johnson & Johnson",
+        "Gillette", "Schick", "Braun", "Philips Norelco", "Panasonic", "Remington",
+        "Conair", "Wahl", "Andis", "Oster", "BaBylissPRO", "Hot Tools",
+        "Chi", "GHD", "T3", "Dyson Airwrap", "Revlon Hair Tools", "2Wolf"
+      ],
       fields: ["size", "color", "material", "gender", "weight"]
     },
     "Perfumes & Fragrances": {
-      subcategories: ["Perfumes", "Attars", "Bakhoor", "Essential Oils", "Gift Sets", "Body Mists"],
-      brands: ["Tom Ford", "Chanel", "Dior", "Versace", "Armani", "2Wolf"],
+      subcategories: [
+        "Perfumes", "Attars", "Bakhoor", "Essential Oils", "Gift Sets", 
+        "Body Mists", "Eau de Parfum", "Eau de Toilette", "Cologne"
+      ],
+      brands: [
+        "Tom Ford", "Chanel", "Dior", "Versace", "Armani", "Gucci", "Prada",
+        "Dolce & Gabbana", "Burberry", "Calvin Klein", "Ralph Lauren", "Hugo Boss",
+        "Yves Saint Laurent", "Givenchy", "Hermès", "Paco Rabanne", "Jean Paul Gaultier",
+        "Thierry Mugler", "Issey Miyake", "Kenzo", "Lancôme", "Estée Lauder",
+        "Clinique", "Elizabeth Arden", "Marc Jacobs", "Michael Kors", "Coach",
+        "Bulgari", "Cartier", "Montblanc", "Davidoff", "Carolina Herrera",
+        "Viktor & Rolf", "Narciso Rodriguez", "Jo Malone", "Creed", "Acqua di Parma",
+        "Byredo", "Le Labo", "Maison Francis Kurkdjian", "Diptyque", "Frederic Malle",
+        "Serge Lutens", "Amouage", "Bond No. 9", "Roja Parfums", "Clive Christian",
+        "Ajmal", "Rasasi", "Swiss Arabian", "Al Haramain", "Nabeel", "Ard Al Zaafaran",
+        "Lattafa", "Afnan", "Armaf", "Paris Corner", "Khalis", "Al Rehab",
+        "Arabian Oud", "Abdul Samad Al Qurashi", "Nasomatto", "Xerjoff", "Nishane",
+        "Memo Paris", "Escentric Molecules", "Penhaligon's", "Comme des Garçons",
+        "L'Artisan Parfumeur", "Annick Goutal", "Editions de Parfums", "Atelier Cologne",
+        "Commodity", "Clean", "Philosophy", "Tocca", "Nest", "Derek Lam", "2Wolf"
+      ],
       fields: ["size", "gender", "weight"]
     }
   };
@@ -209,6 +334,7 @@ const EnhancedProductImportTool = () => {
         subCategory: formData.subCategory,
         brand: formData.brand,
         images: validImages,
+        videos: formData.videos.filter(v => v.url && v.url.trim() !== ''), // ✅ Include videos
         sku,
         discount: parseInt(formData.discount) || 0,
         featured: formData.featured,
@@ -233,6 +359,12 @@ const EnhancedProductImportTool = () => {
         }
       });
 
+      console.log('📦 Product data prepared:', {
+        ...productData,
+        videosCount: productData.videos.length,
+        imagesCount: productData.images.length
+      });
+
       setProduct(productData);
     } catch (err) {
       setError('Failed to process product data');
@@ -247,9 +379,17 @@ const EnhancedProductImportTool = () => {
 
     try {
       const urls = imageUrls.split('\n').filter(url => url.trim());
-      setImageInputs(urls);
-      setPreviewImages(urls);
-      alert(`${urls.length} images imported successfully!`);
+      
+      // ✅ Support up to 10 images
+      const limitedUrls = urls.slice(0, 10);
+      const newImageInputs = [...limitedUrls];
+      while (newImageInputs.length < 10) {
+        newImageInputs.push('');
+      }
+      
+      setImageInputs(newImageInputs);
+      setPreviewImages(limitedUrls);
+      alert(`${limitedUrls.length} images imported successfully! (Max 10)`);
     } catch (err) {
       setError('Failed to import images');
     } finally {
@@ -314,21 +454,31 @@ const EnhancedProductImportTool = () => {
 
   const saveProduct = async () => {
     try {
+      const productToSave = product || formData;
+      
+      console.log('💾 Saving product:', {
+        name: productToSave.name,
+        imagesCount: productToSave.images?.length || 0,
+        videosCount: productToSave.videos?.length || 0,
+        featuresCount: productToSave.features?.length || 0
+      });
+
       const response = await fetch(`${API_BASE_URL}/api/products`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-        body: JSON.stringify(product || formData)
+        body: JSON.stringify(productToSave)
       });
 
       if (response.ok) {
         alert('✅ Product saved successfully!');
+        // Reset form
         setProduct(null);
         setFormData({
           name: '', price: '', stock: '', category: '', subCategory: '', 
-          brand: '2Wolf', images: [], description: '', discount: 0,
+          brand: '2Wolf', images: [], videos: [], description: '', discount: 0,
           featured: false, bestSeller: false, size: '', color: '', material: '',
           gender: '', processor: '', ram: '', storage: '', screenSize: '',
           movement: '', bandMaterial: '', caseStyle: '', waterResistance: '',
@@ -339,14 +489,15 @@ const EnhancedProductImportTool = () => {
           freeDelivery: false, sellingFast: false, lowestPrice: false,
           showRecentlySold: false, recentlySoldCount: 0
         });
-        setImageInputs(['']);
+        setImageInputs(['', '', '', '', '', '', '', '', '', '']); // ✅ Reset to 10 empty slots
         setPreviewImages([]);
         setPastedText('');
         setImageUrls('');
         setAiPrompt('');
         generateIDs();
       } else {
-        alert('❌ Failed to save product');
+        const errorData = await response.json();
+        alert('❌ Failed to save product: ' + (errorData.message || 'Unknown error'));
       }
     } catch (err) {
       alert('Error: ' + err.message);
@@ -366,7 +517,7 @@ const EnhancedProductImportTool = () => {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-[#E5E5E5]">Professional Product Import</h1>
-                  <p className="text-[#A0A0A0] text-sm">Amazon-style product management system</p>
+                  <p className="text-[#A0A0A0] text-sm">Amazon-style product management system - Up to 10 images & video support</p>
                 </div>
               </div>
               {generatedID && (

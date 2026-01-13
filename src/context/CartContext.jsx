@@ -1,9 +1,8 @@
+// ✅ src/context/CartContext.jsx - FIXED VERSION
 import React, { createContext, useState, useEffect, useContext } from 'react';
 
-// Create the CartContext
 export const CartContext = createContext();
 
-// Custom hook to use cart context
 export const useCart = () => {
   const context = useContext(CartContext);
   if (!context) {
@@ -14,29 +13,95 @@ export const useCart = () => {
 
 export default function CartProvider({ children }) {
   const [cart, setCart] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
 
-  // Load cart from localStorage on mount
+  // ✅ Get current user from localStorage
   useEffect(() => {
-    const savedCart = localStorage.getItem('2wolf_cart');
-    if (savedCart) {
-      try {
-        setCart(JSON.parse(savedCart));
-      } catch (error) {
-        console.error('Error loading cart:', error);
-        setCart([]);
+    const checkUser = () => {
+      const token = localStorage.getItem('token');
+      const userEmail = localStorage.getItem('userEmail');
+      const userId = localStorage.getItem('userId');
+      
+      console.log('🔍 CartContext checking user:', { 
+        hasToken: !!token, 
+        email: userEmail, 
+        id: userId 
+      });
+      
+      if (token && (userEmail || userId)) {
+        // Use email or ID as unique identifier
+        setCurrentUser(userEmail || userId);
+        console.log('✅ User set in CartContext:', userEmail || userId);
+      } else {
+        setCurrentUser(null);
+        console.log('⚠️ No user in CartContext');
       }
-    }
+    };
+
+    checkUser();
+
+    // Listen for login/logout events
+    window.addEventListener('userLoggedIn', checkUser);
+    window.addEventListener('userLoggedOut', checkUser);
+    
+    return () => {
+      window.removeEventListener('userLoggedIn', checkUser);
+      window.removeEventListener('userLoggedOut', checkUser);
+    };
   }, []);
 
-  // Save cart to localStorage whenever it changes
+  // ✅ Load cart based on current user
   useEffect(() => {
-    localStorage.setItem('2wolf_cart', JSON.stringify(cart));
-    // Dispatch event for cart icon update
-    window.dispatchEvent(new Event('cartUpdated'));
-  }, [cart]);
+    if (currentUser) {
+      const cartKey = `2wolf_cart_${currentUser}`;
+      const savedCart = localStorage.getItem(cartKey);
+      
+      console.log(`📦 Loading cart for user: ${currentUser}`);
+      
+      if (savedCart) {
+        try {
+          const parsedCart = JSON.parse(savedCart);
+          setCart(parsedCart);
+          console.log(`✅ Cart loaded: ${parsedCart.length} items`);
+        } catch (error) {
+          console.error('❌ Error loading cart:', error);
+          setCart([]);
+        }
+      } else {
+        console.log('📭 No saved cart found, starting fresh');
+        setCart([]);
+      }
+    } else {
+      // ✅ No user logged in = empty cart
+      console.log('👤 No user - clearing cart');
+      setCart([]);
+    }
+  }, [currentUser]);
 
-  // Add item to cart - supports both _id and id
+  // ✅ Save cart to user-specific localStorage
+  useEffect(() => {
+    if (currentUser) {
+      const cartKey = `2wolf_cart_${currentUser}`;
+      localStorage.setItem(cartKey, JSON.stringify(cart));
+      console.log(`💾 Cart saved for ${currentUser}: ${cart.length} items`);
+    }
+    // Dispatch event for navbar update
+    window.dispatchEvent(new Event('cartUpdated'));
+  }, [cart, currentUser]);
+
   const addToCart = (product, quantity = 1) => {
+    if (!currentUser) {
+      console.log('⚠️ addToCart called without user login');
+      alert('Please login to add items to cart');
+      return;
+    }
+
+    console.log(`➕ Adding to cart:`, { 
+      product: product.name, 
+      quantity, 
+      user: currentUser 
+    });
+
     setCart(prevCart => {
       const productId = product._id || product.id;
       const existingItem = prevCart.find(item => 
@@ -44,7 +109,7 @@ export default function CartProvider({ children }) {
       );
       
       if (existingItem) {
-        // Update quantity if item already exists
+        console.log(`📈 Increasing quantity for: ${product.name}`);
         return prevCart.map(item => {
           const itemId = item._id || item.id;
           return itemId === productId
@@ -53,7 +118,7 @@ export default function CartProvider({ children }) {
         });
       }
       
-      // Add new item with normalized structure
+      console.log(`✨ Adding new item: ${product.name}`);
       return [...prevCart, { 
         ...product, 
         id: productId,
@@ -63,20 +128,20 @@ export default function CartProvider({ children }) {
     });
   };
 
-  // Remove item from cart
   const removeFromCart = (productId) => {
+    console.log(`➖ Removing from cart:`, productId);
     setCart(prevCart => prevCart.filter(item => 
       (item._id || item.id) !== productId
     ));
   };
 
-  // Update item quantity
   const updateQuantity = (productId, quantity) => {
     if (quantity <= 0) {
       removeFromCart(productId);
       return;
     }
     
+    console.log(`🔄 Updating quantity:`, { productId, quantity });
     setCart(prevCart =>
       prevCart.map(item => {
         const itemId = item._id || item.id;
@@ -85,12 +150,15 @@ export default function CartProvider({ children }) {
     );
   };
 
-  // Clear entire cart
   const clearCart = () => {
+    console.log(`🗑️ Clearing cart for user: ${currentUser}`);
     setCart([]);
+    if (currentUser) {
+      const cartKey = `2wolf_cart_${currentUser}`;
+      localStorage.removeItem(cartKey);
+    }
   };
 
-  // Calculate total price
   const getCartTotal = () => {
     return cart.reduce((total, item) => {
       const price = typeof item.price === 'number' ? item.price : parseFloat(item.price) || 0;
@@ -100,7 +168,6 @@ export default function CartProvider({ children }) {
     }, 0);
   };
 
-  // Get cart item count
   const getCartCount = () => {
     return cart.reduce((count, item) => count + item.quantity, 0);
   };

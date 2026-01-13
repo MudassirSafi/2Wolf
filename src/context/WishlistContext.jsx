@@ -1,19 +1,25 @@
-// src/context/WishlistContext.jsx
-import React, { createContext, useState, useContext, useEffect } from 'react';
+// ==========================================
+// 📁 FILE 2: src/context/WishlistContext.jsx - FIXED
+// ==========================================
+import React, { createContext, useContext, useState, useEffect } from "react";
+import axios from "axios";
 
-const WishlistContext = createContext();
+export const WishlistContext = createContext();
 
 export const useWishlist = () => {
   const context = useContext(WishlistContext);
   if (!context) {
-    throw new Error('useWishlist must be used within a WishlistProvider');
+    throw new Error("useWishlist must be used within a WishlistProvider");
   }
   return context;
 };
 
-export const WishlistProvider = ({ children }) => {
-  const [wishlistItems, setWishlistItems] = useState([]);
-  const [wishlistCount, setWishlistCount] = useState(0);
+const WishlistProvider = ({ children }) => {
+  const [wishlist, setWishlist] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // ✅ FIXED: Changed from VITE_API_URL to VITE_API_BASE_URL
+  const API_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
   useEffect(() => {
     fetchWishlist();
@@ -21,125 +27,101 @@ export const WishlistProvider = ({ children }) => {
 
   const fetchWishlist = async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.log("⚠️ No token - user not logged in");
+        setLoading(false);
+        return;
+      }
 
-      const response = await fetch('http://localhost:5000/api/wishlist', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      console.log("🔍 Fetching wishlist from:", `${API_URL}/api/wishlist`);
+      
+      const response = await axios.get(`${API_URL}/api/wishlist`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setWishlistItems(data);
-        setWishlistCount(data.length);
-      }
+      const items = response.data.items || [];
+      setWishlist(items);
+      console.log("✅ Wishlist fetched:", items.length, "items");
     } catch (error) {
-      console.error('Error fetching wishlist:', error);
+      console.error("❌ Error fetching wishlist:", error);
+      setWishlist([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const addToWishlist = async (product) => {
+  const addToWishlist = async (productId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (!token) {
-        alert('Please login to add items to wishlist');
-        return false;
+        throw new Error("Please sign in to add items to wishlist");
       }
 
-      const response = await fetch(`http://localhost:5000/api/wishlist/${product._id}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      console.log("➕ Adding product to wishlist:", productId);
 
-      const data = await response.json();
+      const response = await axios.post(
+        `${API_URL}/api/wishlist/add`,
+        { productId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
-      if (response.ok) {
-        setWishlistItems(data.wishlist);
-        setWishlistCount(data.wishlist.length);
-        return true;
-      } else {
-        alert(data.message);
-        return false;
-      }
+      const items = response.data.items || [];
+      setWishlist(items);
+      console.log("✅ Added to wishlist successfully");
+      
+      return { success: true, message: "Added to wishlist" };
     } catch (error) {
-      console.error('Error adding to wishlist:', error);
-      alert('Failed to add to wishlist');
-      return false;
+      console.error("❌ Error adding to wishlist:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to add to wishlist",
+      };
     }
   };
 
   const removeFromWishlist = async (productId) => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Please sign in");
+      }
 
-      const response = await fetch(`http://localhost:5000/api/wishlist/${productId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      console.log("➖ Removing product from wishlist:", productId);
+
+      const response = await axios.delete(`${API_URL}/api/wishlist/remove/${productId}`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setWishlistItems(data.wishlist);
-        setWishlistCount(data.wishlist.length);
-      }
+      const items = response.data.items || [];
+      setWishlist(items);
+      console.log("✅ Removed from wishlist successfully");
+      
+      return { success: true, message: "Removed from wishlist" };
     } catch (error) {
-      console.error('Error removing from wishlist:', error);
+      console.error("❌ Error removing from wishlist:", error);
+      return {
+        success: false,
+        message: error.response?.data?.message || "Failed to remove from wishlist",
+      };
     }
   };
 
   const isInWishlist = (productId) => {
-    return wishlistItems.some(item => item._id === productId);
+    return wishlist.some((item) => item._id === productId || item.product?._id === productId);
   };
 
-  const toggleWishlist = async (product) => {
-    if (isInWishlist(product._id)) {
-      await removeFromWishlist(product._id);
-    } else {
-      await addToWishlist(product);
-    }
-  };
-
-  const clearWishlist = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-
-      const response = await fetch('http://localhost:5000/api/wishlist', {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        setWishlistItems([]);
-        setWishlistCount(0);
-      }
-    } catch (error) {
-      console.error('Error clearing wishlist:', error);
-    }
+  const value = {
+    wishlist,
+    loading,
+    addToWishlist,
+    removeFromWishlist,
+    isInWishlist,
+    fetchWishlist,
   };
 
   return (
-    <WishlistContext.Provider
-      value={{
-        wishlistItems,
-        wishlistCount,
-        addToWishlist,
-        removeFromWishlist,
-        isInWishlist,
-        toggleWishlist,
-        clearWishlist,
-        fetchWishlist
-      }}
-    >
+    <WishlistContext.Provider value={value}>
       {children}
     </WishlistContext.Provider>
   );

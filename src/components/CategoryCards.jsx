@@ -1,109 +1,97 @@
 // src/components/CategoryCards.jsx
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import WishlistButton from "./WishlistButton";
 
 export default function CategoryCards() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
   // Complete category structure
   const categoryStructure = {
     "📱 Electronics": {
-      subcategories: ["Mobile Phones", "Smartphone Accessories", "Laptops", "Tablets"]
+      subcategories: ["Mobile Phones", "Laptops", "Tablets", "Headphones"]
     },
     "👗 Fashion": {
-      subcategories: ["Men's Clothing", "Women's Clothing", "Kids Clothing", "Accessories"]
+      subcategories: ["Men's Clothing", "Women's Clothing", "Kids Clothing", "Shoes"]
     },
     "🏠 Home & Kitchen": {
-      subcategories: ["Furniture", "Kitchen Appliances", "Home Decor", "Bedding"]
+      subcategories: ["Furniture", "Kitchen Appliances", "Home Decor", "Cookware"]
     },
     "🧴 Beauty & Care": {
       subcategories: ["Skincare", "Hair Care", "Makeup", "Fragrances"]
     },
-    "💊 Health": {
-      subcategories: ["Vitamins", "Medical Supplies", "First Aid", "Wellness"]
+    "⌚ Watches": {
+      subcategories: ["Men's Watches", "Women's Watches", "Smart Watches", "Sports Watches"]
     },
-    "🍼 Baby Products": {
-      subcategories: ["Diapers", "Baby Food", "Baby Clothing", "Baby Toys"]
+    "🏋️ Sports": {
+      subcategories: ["Fitness Equipment", "Outdoor Recreation", "Sports Apparel", "Cycling"]
     },
-    "🧸 Toys & Games": {
-      subcategories: ["Action Figures", "Board Games", "Puzzles", "Outdoor Toys"]
+    "🎮 Gaming": {
+      subcategories: ["Console Games", "PC Games", "Gaming Accessories", "VR Games"]
     },
     "📚 Books": {
       subcategories: ["Fiction", "Non-Fiction", "Children's Books", "Stationery"]
-    },
-    "🎮 Video Games": {
-      subcategories: ["Console Games", "PC Games", "Gaming Accessories", "VR Games"]
-    },
-    "🎵 Music & Movies": {
-      subcategories: ["CDs & Vinyl", "DVDs", "Musical Instruments", "Karaoke"]
-    },
-    "🚗 Automotive": {
-      subcategories: ["Car Accessories", "Car Electronics", "Tools", "Tires"]
-    },
-    "🏋️ Sports": {
-      subcategories: ["Fitness Equipment", "Outdoor Recreation", "Cycling", "Sports Apparel"]
-    },
-    "🐶 Pet Supplies": {
-      subcategories: ["Dog Supplies", "Cat Supplies", "Pet Food", "Pet Toys"]
-    },
-    "🧰 Tools": {
-      subcategories: ["Power Tools", "Hand Tools", "Safety Equipment", "Measuring Tools"]
-    },
-    "🏢 Office": {
-      subcategories: ["Office Furniture", "Printers", "Paper Products", "Writing"]
-    },
-    "🌱 Garden": {
-      subcategories: ["Gardening Tools", "Plants & Seeds", "Outdoor Furniture", "Lawn Care"]
     }
   };
 
   useEffect(() => {
-    const fetchCategoryProducts = async () => {
-      try {
-        const response = await fetch(`${API_URL}/api/products`);
-        const data = await response.json();
-        
-        if (data.success && data.products) {
-          const products = data.products;
-          
-          // Create category data with products
-          const categoryData = Object.keys(categoryStructure).slice(0, 8).map(categoryName => {
-            const cleanCategoryName = categoryName.replace(/^[^\s]+\s/, ''); // Remove emoji
-            
-            const items = categoryStructure[categoryName].subcategories.map(subCat => {
-              // Find a product matching this subcategory
-              const product = products.find(p => 
-                p.subCategory?.toLowerCase().includes(subCat.toLowerCase()) ||
-                p.category?.toLowerCase().includes(cleanCategoryName.toLowerCase())
-              );
-              
-              return {
-                name: subCat,
-                product: product || null
-              };
-            });
+    fetchCategoryProducts();
+  }, []);
 
+  const fetchCategoryProducts = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/products`);
+      const data = await response.json();
+      
+      if (data.success && data.products) {
+        const products = data.products;
+        
+        // Create category data with ACTUAL products
+        const categoryData = Object.keys(categoryStructure).slice(0, 8).map(categoryName => {
+          const cleanCategoryName = categoryName.replace(/^[^\s]+\s/, ''); // Remove emoji
+          
+          // Find products that match this category
+          const categoryProducts = products.filter(p => 
+            p.category?.toLowerCase().includes(cleanCategoryName.toLowerCase())
+          );
+
+          // Map to subcategories or just take first 4 products
+          const items = categoryStructure[categoryName].subcategories.slice(0, 4).map((subCat, idx) => {
+            // Try to find product matching subcategory
+            let product = categoryProducts.find(p => 
+              p.subCategory?.toLowerCase().includes(subCat.toLowerCase())
+            );
+            
+            // If no match, just take next available product
+            if (!product && categoryProducts[idx]) {
+              product = categoryProducts[idx];
+            }
+            
             return {
-              category: categoryName,
-              title: categoryName,
-              items: items
+              name: product?.name || subCat,
+              product: product || null
             };
           });
 
-          setCategories(categoryData);
-        }
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+          return {
+            category: categoryName,
+            title: categoryName,
+            items: items,
+            productCount: categoryProducts.length
+          };
+        });
 
-    fetchCategoryProducts();
-  }, []);
+        setCategories(categoryData);
+      }
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCategoryClick = (category, subCategory = null) => {
     const cleanCategory = category.replace(/^[^\s]+\s/, '');
@@ -117,6 +105,12 @@ export default function CategoryCards() {
   const handleExploreAll = (category) => {
     const cleanCategory = category.replace(/^[^\s]+\s/, '');
     window.location.href = `/shop?category=${encodeURIComponent(cleanCategory)}`;
+  };
+
+  const handleProductClick = (product) => {
+    if (product) {
+      window.location.href = `/product/${product._id}`;
+    }
   };
 
   if (loading) {
@@ -149,6 +143,9 @@ export default function CategoryCards() {
                 <h3 className="text-xl font-bold text-white line-clamp-1">
                   {cat.title}
                 </h3>
+                {cat.productCount > 0 && (
+                  <p className="text-orange-100 text-xs mt-1">{cat.productCount} products</p>
+                )}
               </div>
 
               {/* Card Body */}
@@ -158,16 +155,28 @@ export default function CategoryCards() {
                   {cat.items.slice(0, 4).map((item, itemIdx) => (
                     <div
                       key={itemIdx}
-                      onClick={() => handleCategoryClick(cat.category, item.name)}
-                      className="cursor-pointer group"
+                      onClick={() => item.product ? handleProductClick(item.product) : handleCategoryClick(cat.category, item.name)}
+                      className="cursor-pointer group relative"
                     >
-                      <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-2 border-2 border-transparent group-hover:border-orange-400 transition-all">
+                      <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden mb-2 border-2 border-transparent group-hover:border-orange-400 transition-all relative">
                         {item.product ? (
-                          <img
-                            src={item.product.images?.[0] || 'https://via.placeholder.com/200'}
-                            alt={item.name}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                          />
+                          <>
+                            <img
+                              src={item.product.images?.[0] || 'https://via.placeholder.com/200'}
+                              alt={item.name}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            />
+                            {/* Wishlist Button */}
+                            <div className="absolute top-1.5 right-1.5 z-10">
+                              <WishlistButton product={item.product} size="small" />
+                            </div>
+                            {/* Discount Badge */}
+                            {item.product.discount > 0 && (
+                              <div className="absolute top-1.5 left-1.5 bg-red-500 text-white px-1.5 py-0.5 rounded text-[10px] font-bold z-10">
+                                -{item.product.discount}%
+                              </div>
+                            )}
+                          </>
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-400">
                             <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
@@ -176,9 +185,17 @@ export default function CategoryCards() {
                           </div>
                         )}
                       </div>
-                      <p className="text-xs text-gray-700 group-hover:text-orange-600 transition-colors font-medium">
-                        {item.name}
+                      <p className="text-[10px] text-gray-700 group-hover:text-orange-600 transition-colors font-medium line-clamp-2">
+                        {item.product?.name || item.name}
                       </p>
+                      {item.product && (
+                        <p className="text-[11px] font-bold text-orange-600 mt-0.5">
+                          AED {item.product.discount > 0 
+                            ? (item.product.price * (1 - item.product.discount / 100)).toFixed(2)
+                            : item.product.price.toFixed(2)
+                          }
+                        </p>
+                      )}
                     </div>
                   ))}
                 </div>

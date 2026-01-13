@@ -1,4 +1,4 @@
-// src/pages/BestSeller.jsx
+// src/pages/BestSeller.jsx - FIXED
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaStar, FaChevronDown, FaChevronUp, FaTrophy } from "react-icons/fa";
@@ -29,7 +29,8 @@ export default function BestSeller() {
     availability: true
   });
 
-  const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:5000';
+  // ✅ FIXED: Use correct environment variable
+  const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
   // Categories (same as AllCategories)
   const categories = {
@@ -104,15 +105,21 @@ export default function BestSeller() {
   const fetchBestSellerProducts = async () => {
     try {
       setLoading(true);
+      console.log("🔍 Fetching best sellers from:", `${API_URL}/api/products?bestSeller=true`);
       // ✅ Fetch only best seller products
       const response = await fetch(`${API_URL}/api/products?bestSeller=true`);
       const data = await response.json();
       
+      console.log("📦 Best sellers response:", data);
+      
       if (data.success && data.products) {
+        console.log("✅ Best seller products:", data.products.length);
         setProducts(data.products);
+      } else {
+        console.log("⚠️ No best seller products found");
       }
     } catch (error) {
-      console.error("Error fetching best seller products:", error);
+      console.error("❌ Error fetching best seller products:", error);
     } finally {
       setLoading(false);
     }

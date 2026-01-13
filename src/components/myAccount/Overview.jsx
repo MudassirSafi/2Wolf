@@ -1,15 +1,12 @@
-// src/components/myAccount/Overview.jsx
+// ✅ src/components/myAccount/Overview.jsx
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   FaShoppingBag, FaCheckCircle, FaClock, FaHeart, 
-  FaBox, FaEye, FaShippingFast 
+  FaBox, FaEye 
 } from 'react-icons/fa';
 
 export default function Overview({ orders, wishlistCount, setActiveTab }) {
-  const navigate = useNavigate();
-
   const calculateStats = () => {
     const total = orders.length;
     const delivered = orders.filter(o => o.status === 'Delivered').length;
@@ -20,15 +17,6 @@ export default function Overview({ orders, wishlistCount, setActiveTab }) {
 
   const stats = calculateStats();
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'Delivered': return <FaCheckCircle className="text-green-500" />;
-      case 'Shipped': return <FaShippingFast className="text-blue-500" />;
-      case 'Processing': return <FaClock className="text-orange-500" />;
-      default: return <FaBox className="text-gray-500" />;
-    }
-  };
-
   const getStatusColor = (status) => {
     switch (status) {
       case 'Delivered': return 'bg-green-50 text-green-700 border-green-200';
@@ -36,6 +24,15 @@ export default function Overview({ orders, wishlistCount, setActiveTab }) {
       case 'Processing': return 'bg-orange-50 text-orange-700 border-orange-200';
       case 'Pending': return 'bg-yellow-50 text-yellow-700 border-yellow-200';
       default: return 'bg-gray-50 text-gray-700 border-gray-200';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'Delivered': return <FaCheckCircle className="text-green-500" />;
+      case 'Shipped': return <FaBox className="text-blue-500" />;
+      case 'Processing': return <FaClock className="text-orange-500" />;
+      default: return <FaBox className="text-gray-500" />;
     }
   };
 
@@ -127,7 +124,7 @@ export default function Overview({ orders, wishlistCount, setActiveTab }) {
             <FaShoppingBag className="text-5xl text-gray-300 mx-auto mb-3" />
             <p className="text-gray-600 mb-4">No orders yet</p>
             <button
-              onClick={() => navigate('/')}
+              onClick={() => window.location.href = '/'}
               className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
             >
               Start Shopping

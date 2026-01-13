@@ -1,4 +1,6 @@
-// ✅ src/components/SignUp.jsx - Mobile First, No Apple
+// ==========================================
+// 📁 FILE 3: src/components/SignUp.jsx - FIXED
+// ==========================================
 import React, { useState, useContext } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
@@ -18,7 +20,7 @@ export default function SignUp({ onClose }) {
   const nav = useNavigate();
   const { login } = useContext(AuthContext);
 
-  const API = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:5000';
+  const API = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || 'http://localhost:5000';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,18 +39,30 @@ export default function SignUp({ onClose }) {
     setLoading(true);
 
     try {
+      console.log('🔍 Attempting signup to:', `${API}/api/users/signup`);
+      
       const res = await axios.post(`${API}/api/users/signup`, { 
         name: name.trim(), 
         email: email.trim().toLowerCase(), 
         password 
       });
       
-      const { token, role } = res.data;
-      login(token, role);
+      console.log('✅ Signup response:', res.data);
+      
+      // ✅ FIXED: Extract user data from response
+      const { token, role, name: userName, email: userEmail, _id } = res.data;
+      
+      // ✅ FIXED: Pass user data to login function
+      login(token, role, {
+        name: userName || name.trim(),
+        email: userEmail || email.trim().toLowerCase(),
+        id: _id || res.data.user?._id
+      });
       
       if (onClose) onClose();
       nav('/');
     } catch (error) {
+      console.error('❌ Signup error:', error);
       setErr(error?.response?.data?.message || 'Sign up failed');
     } finally {
       setLoading(false);
@@ -193,14 +207,12 @@ export default function SignUp({ onClose }) {
             {loading ? 'Creating Account...' : 'Sign Up'}
           </button>
 
-          {/* Divider */}
           <div className="flex items-center my-4 sm:my-6">
             <div className="flex-1 border-t border-gray-300"></div>
             <span className="px-3 sm:px-4 text-xs sm:text-sm text-gray-500">OR</span>
             <div className="flex-1 border-t border-gray-300"></div>
           </div>
 
-          {/* Google OAuth Button */}
           <button 
             type="button" 
             onClick={handleGoogle} 

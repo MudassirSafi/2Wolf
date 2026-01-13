@@ -1,5 +1,7 @@
-// src/pages/AuthCallback.jsx - FIXED
-import React, { useEffect, useContext } from 'react';
+// ==========================================
+// 📁 FILE 2: src/pages/AuthCallback.jsx - FIXED (FASTER)
+// ==========================================
+import { useEffect, useContext } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 
@@ -9,41 +11,74 @@ export default function AuthCallback() {
   const { login } = useContext(AuthContext);
 
   useEffect(() => {
-    const token = searchParams.get('token');
-    const role = searchParams.get('role');
-    const error = searchParams.get('error');
+    const handleCallback = async () => {
+      try {
+        console.log('\n=== OAUTH CALLBACK HANDLING ===');
+        
+        const token = searchParams.get('token');
+        const role = searchParams.get('role');
+        const name = searchParams.get('name');
+        const email = searchParams.get('email');
+        const id = searchParams.get('id');
+        const error = searchParams.get('error');
 
-    console.log('Auth callback received:', { token: !!token, role, error });
+        console.log('📦 Received params:', { 
+          hasToken: !!token, 
+          role, 
+          name, 
+          email,
+          hasId: !!id,
+          error 
+        });
 
-    if (error) {
-      // OAuth failed, redirect to signin with error
-      alert('Google sign-in failed. Please try again.');
-      navigate('/signin');
-      return;
-    }
+        if (error) {
+          console.error('❌ OAuth error:', error);
+          navigate('/signin?error=' + error);
+          return;
+        }
 
-    if (token && role) {
-      // Store token and role
-      login(token, role);
-      
-      // Redirect based on role
-      if (role === 'admin') {
-        navigate('/dashboard');
-      } else {
-        navigate('/');
+        if (!token || !role) {
+          console.error('❌ Missing token or role');
+          navigate('/signin?error=missing_data');
+          return;
+        }
+
+        console.log('✅ OAuth callback successful');
+        console.log('👤 User data:', { name, email, role });
+        
+        // ✅ Call login immediately - no async needed
+        login(token, role, { name, email, id });
+        
+        console.log('✅ Login completed, redirecting...');
+        
+        // ✅ Small delay to ensure localStorage is updated
+        setTimeout(() => {
+          if (role === 'admin') {
+            navigate('/admin/dashboard', { replace: true });
+          } else {
+            navigate('/', { replace: true });
+          }
+        }, 100);
+
+        console.log('=== OAUTH CALLBACK COMPLETE ===\n');
+      } catch (err) {
+        console.error('❌ Callback error:', err);
+        navigate('/signin?error=callback_failed');
       }
-    } else {
-      // Missing token or role, redirect to signin
-      console.error('Missing token or role');
-      navigate('/signin');
-    }
+    };
+
+    handleCallback();
   }, [searchParams, navigate, login]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-orange-50 to-white">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-orange-500 mx-auto mb-4"></div>
-        <p className="text-gray-700 text-xl">Authenticating with Google...</p>
+        <div className="relative w-16 h-16 mx-auto mb-4">
+          <div className="absolute top-0 left-0 w-full h-full border-4 border-orange-200 rounded-full"></div>
+          <div className="absolute top-0 left-0 w-full h-full border-4 border-orange-500 rounded-full border-t-transparent animate-spin"></div>
+        </div>
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">Signing you in...</h2>
+        <p className="text-gray-600 text-sm">Please wait a moment</p>
       </div>
     </div>
   );

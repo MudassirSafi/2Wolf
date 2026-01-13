@@ -1,4 +1,4 @@
-// src/App.jsx - CORRECTED WITH PROPER IMPORTS
+// src/App.jsx - FIXED: Proper layout with footer always at bottom and reduced spacing
 import React from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 
@@ -43,7 +43,6 @@ import PaymentSettings from "./pages/admin/PaymentSettings";
 import ShippingSettings from "./pages/admin/ShippingSettings";
 import UsersSettings from "./pages/admin/UsersSettings";
 import AdminShippingPanel from "./pages/admin/AdminShippingPanel";
-// ✅ CORRECT IMPORT - Use EnhancedProductImportTool
 import EnhancedProductImportTool from "./pages/admin/EnhancedProductImportTool";
 
 export default function App() {
@@ -51,7 +50,8 @@ export default function App() {
     <AuthProvider>
       <CartProvider>
         <WishlistProvider>
-          <div className="min-h-screen bg-[var(--bg)] text-[var(--text)] font-poppins">
+          {/* ✅ FIXED: min-h-screen with flex column layout */}
+          <div className="flex flex-col min-h-screen bg-[var(--bg)] text-[var(--text)] font-poppins">
             <Layout>
               <Routes>
                 {/* Public Routes */}
@@ -89,7 +89,7 @@ export default function App() {
                 <Route path="/bestsellers" element={<AllCategories />} />
                 <Route path="/new-releases" element={<AllCategories />} />
 
-                {/* Admin Routes - Using EnhancedProductImportTool */}
+                {/* Admin Routes */}
                 <Route path="/dashboard" element={<AdminDashboard />} />
                 <Route path="/dashboard/products" element={<Products />} />
                 <Route path="/dashboard/import" element={<EnhancedProductImportTool />} />
@@ -129,7 +129,8 @@ function Layout({ children }) {
   return (
     <>
       <Navbar />
-      <main className="relative z-10 pt-4">
+      {/* ✅ FIXED: Reduced padding - pt-[140px] for mobile, pt-[120px] for desktop */}
+      <main className="flex-1 relative z-10 pt-[140px] lg:pt-[120px]">
         {children}
       </main>
       <Footer />

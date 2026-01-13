@@ -1,18 +1,21 @@
-// src/pages/MyAccount.jsx - Main Container
+// ✅ src/pages/MyAccount.jsx - FIXED VERSION
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FaHome, FaShoppingBag, FaUser, FaMapMarkerAlt, FaHeart, 
-  FaStar, FaCog, FaSignOutAlt
+  FaCog, FaSignOutAlt
 } from 'react-icons/fa';
 
 // Import components
 import Overview from '../components/myAccount/Overview';
-import MyOrders from './MyOrders';
 import Profile from '../components/myAccount/Profile';
+import Addresses from '../components/myAccount/Addresses';
 import Settings from '../components/myAccount/Settings';
 import OrderDetailModal from '../components/myAccount/OrderDetailModal';
+
+// Import existing page components
+import MyOrdersPage from './MyOrders'; // Your existing orders page
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -20,6 +23,8 @@ export default function MyAccount() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [orders, setOrders] = useState([]);
+  const [wishlistItems, setWishlistItems] = useState([]);
+  const [addresses, setAddresses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
@@ -29,7 +34,6 @@ export default function MyAccount() {
     phone: '',
     avatar: null
   });
-  const [wishlistCount, setWishlistCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -40,8 +44,9 @@ export default function MyAccount() {
       fetchUserProfile();
       fetchMyOrders();
       fetchWishlist();
+      fetchAddresses();
     }
-  }, []);
+  }, [navigate]);
 
   const fetchUserProfile = async () => {
     try {
@@ -94,10 +99,25 @@ export default function MyAccount() {
       });
       if (response.ok) {
         const data = await response.json();
-        setWishlistCount(data.wishlist?.products?.length || 0);
+        setWishlistItems(data.items || []);
       }
     } catch (error) {
       console.error('Error fetching wishlist:', error);
+    }
+  };
+
+  const fetchAddresses = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/users/addresses`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setAddresses(data.addresses || []);
+      }
+    } catch (error) {
+      console.error('Error fetching addresses:', error);
     }
   };
 
@@ -107,43 +127,49 @@ export default function MyAccount() {
   };
 
   const tabs = [
-    { id: "overview", label: "Overview", icon: <FaHome />, component: Overview },
-    { id: "orders", label: "My Orders", icon: <FaShoppingBag />, badge: orders.length, component: MyOrders },
-    { id: "profile", label: "Profile", icon: <FaUser />, component: Profile },
-    { id: "addresses", label: "Addresses", icon: <FaMapMarkerAlt /> },
-    { id: "wishlist", label: "Wishlist", icon: <FaHeart />, badge: wishlistCount },
-    { id: "reviews", label: "Reviews", icon: <FaStar /> },
-    { id: "settings", label: "Settings", icon: <FaCog />, component: Settings },
+    { id: "overview", label: "Overview", icon: <FaHome /> },
+    { id: "orders", label: "My Orders", icon: <FaShoppingBag />, badge: orders.length },
+    { id: "profile", label: "Profile", icon: <FaUser /> },
+    { id: "addresses", label: "Addresses", icon: <FaMapMarkerAlt />, badge: addresses.length },
+    { id: "wishlist", label: "Wishlist", icon: <FaHeart />, badge: wishlistItems.length },
+    { id: "settings", label: "Settings", icon: <FaCog /> },
   ];
 
-  const PlaceholderComponent = ({ title }) => (
-    <div className="text-center py-16">
-      <div className="text-6xl mb-4">🚧</div>
-      <h3 className="text-xl font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600">This feature is coming soon!</p>
-    </div>
-  );
-
   const renderContent = () => {
-    const activeTabData = tabs.find(t => t.id === activeTab);
-    const Component = activeTabData?.component;
-
-    if (Component) {
-      const props = {
-        orders,
-        loading,
-        wishlistCount,
-        setActiveTab,
-        setSelectedOrder,
-        userProfile,
-        setUserProfile,
-        profileImage,
-        setProfileImage
-      };
-      return <Component {...props} />;
+    switch (activeTab) {
+      case "overview":
+        return <Overview orders={orders} wishlistCount={wishlistItems.length} setActiveTab={setActiveTab} />;
+      
+      case "orders":
+        // Render your existing MyOrders page but without its own layout
+        return (
+          <div className="-m-4 sm:-m-6 lg:-m-8">
+            <MyOrdersPage />
+          </div>
+        );
+      
+      case "profile":
+        return (
+          <Profile 
+            userProfile={userProfile} 
+            setUserProfile={setUserProfile}
+            profileImage={profileImage}
+            setProfileImage={setProfileImage}
+          />
+        );
+      
+      case "addresses":
+        return <Addresses addresses={addresses} setAddresses={setAddresses} fetchAddresses={fetchAddresses} />;
+      
+      case "wishlist":
+        return <WishlistTab items={wishlistItems} fetchWishlist={fetchWishlist} />;
+      
+      case "settings":
+        return <Settings />;
+      
+      default:
+        return <Overview orders={orders} wishlistCount={wishlistItems.length} setActiveTab={setActiveTab} />;
     }
-
-    return <PlaceholderComponent title={activeTabData?.label} />;
   };
 
   return (
@@ -180,7 +206,7 @@ export default function MyAccount() {
                   <div className="relative mb-4">
                     <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center text-3xl font-bold border-4 border-white/30 overflow-hidden">
                       {profileImage ? (
-                        <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
+                        <img src={`${API_BASE_URL}${profileImage}`} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
                         userProfile.name?.charAt(0)?.toUpperCase() || '?'
                       )}
@@ -240,12 +266,11 @@ export default function MyAccount() {
                 className="w-64 bg-white h-full overflow-y-auto"
                 onClick={(e) => e.stopPropagation()}
               >
-                {/* Profile */}
                 <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 text-white">
                   <div className="flex flex-col items-center text-center">
                     <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold border-4 border-white/30 overflow-hidden mb-3">
                       {profileImage ? (
-                        <img src={profileImage} alt="Profile" className="w-full h-full object-cover" />
+                        <img src={`${API_BASE_URL}${profileImage}`} alt="Profile" className="w-full h-full object-cover" />
                       ) : (
                         userProfile.name?.charAt(0)?.toUpperCase() || '?'
                       )}
@@ -255,7 +280,6 @@ export default function MyAccount() {
                   </div>
                 </div>
 
-                {/* Nav */}
                 <nav className="p-4">
                   {tabs.map((tab) => (
                     <button
@@ -305,7 +329,7 @@ export default function MyAccount() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.2 }}
-                className="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8"
+                className={activeTab === 'orders' ? '' : 'bg-white rounded-2xl shadow-sm border border-gray-200 p-4 sm:p-6 lg:p-8'}
               >
                 {renderContent()}
               </motion.div>
@@ -321,6 +345,124 @@ export default function MyAccount() {
           onClose={() => setSelectedOrder(null)}
         />
       )}
+    </div>
+  );
+}
+
+// ==========================================
+// WISHLIST TAB COMPONENT (Simple version since you handle wishlist elsewhere)
+// ==========================================
+function WishlistTab({ items, fetchWishlist }) {
+  const navigate = useNavigate();
+
+  const handleRemove = async (productId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/wishlist/remove/${productId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        fetchWishlist();
+      }
+    } catch (error) {
+      console.error('Error removing from wishlist:', error);
+      alert('Failed to remove item');
+    }
+  };
+
+  if (!items || items.length === 0) {
+    return (
+      <div className="text-center py-16">
+        <div className="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <FaHeart className="text-4xl text-purple-500" />
+        </div>
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">Your wishlist is empty</h3>
+        <p className="text-gray-600 mb-6">Start adding items you love!</p>
+        <button
+          onClick={() => navigate('/')}
+          className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition"
+        >
+          Browse Products
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">My Wishlist</h2>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {items.map((item) => (
+          <motion.div
+            key={item._id}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition group"
+          >
+            <div className="relative aspect-square overflow-hidden bg-gray-100">
+              <img
+                src={item.images?.[0] || 'https://via.placeholder.com/300'}
+                alt={item.name}
+                className="w-full h-full object-cover group-hover:scale-110 transition duration-300"
+              />
+              <button
+                onClick={() => handleRemove(item._id)}
+                className="absolute top-3 right-3 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-red-50 transition"
+                title="Remove from wishlist"
+              >
+                <FaHeart className="text-red-500" />
+              </button>
+            </div>
+            
+            <div className="p-4">
+              <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 h-12">
+                {item.name}
+              </h3>
+              
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  {item.discount > 0 ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-orange-600">
+                        AED {(item.price * (1 - item.discount / 100)).toFixed(2)}
+                      </span>
+                      <span className="text-sm text-gray-500 line-through">
+                        AED {item.price.toFixed(2)}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-lg font-bold text-gray-900">
+                      AED {item.price.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {item.stock > 0 ? (
+                <button
+                  onClick={() => {
+                    // Add to cart logic here
+                    console.log('Add to cart:', item._id);
+                  }}
+                  className="w-full py-2.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition font-semibold text-sm"
+                >
+                  Add to Cart
+                </button>
+              ) : (
+                <button
+                  disabled
+                  className="w-full py-2.5 bg-gray-200 text-gray-500 rounded-lg cursor-not-allowed text-sm font-semibold"
+                >
+                  Out of Stock
+                </button>
+              )}
+            </div>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }

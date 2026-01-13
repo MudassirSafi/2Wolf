@@ -1,9 +1,9 @@
-// ✅ src/components/Navbar.jsx - Enhanced with Orange Theme
+// ✅ src/components/Navbar.jsx - Enhanced with Orange Theme + Scroll Behavior
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 import { CartContext } from "../context/CartContext";
-import Logo from "../assets/2WolfLogo.png";
+import Logo from "../assets/wolfLogo.png";
 import { 
   FaHeart, FaShoppingCart, FaUser, FaBars, FaTimes, FaSearch, 
   FaMapMarkerAlt, FaChevronDown, FaBoxOpen, FaTag, FaMobileAlt,
@@ -21,6 +21,7 @@ export default function Navbar() {
   const { getCartCount } = useContext(CartContext);
   
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [isAccountOpen, setIsAccountOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -31,6 +32,8 @@ export default function Navbar() {
   const [userLocation, setUserLocation] = useState(null);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [cartCount, setCartCount] = useState(getCartCount());
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   const accountRef = useRef(null);
   const categoriesRef = useRef(null);
@@ -61,6 +64,34 @@ export default function Navbar() {
     { name: "Grocery & Food", icon: FaShoppingBasket, path: "/shop?category=Grocery & Food", category: "Grocery & Food" }
   ];
 
+  // Scroll behavior for home page only
+  useEffect(() => {
+    const isHomePage = location.pathname === '/';
+    if (!isHomePage) {
+      setIsVisible(true);
+      return;
+    }
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY < 50) {
+        setIsVisible(true);
+      } else if (currentScrollY > lastScrollY) {
+        // Scrolling down
+        setIsVisible(false);
+      } else {
+        // Scrolling up
+        setIsVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY, location.pathname]);
+
   // Load user location
   useEffect(() => {
     const loadLocation = () => {
@@ -75,21 +106,28 @@ export default function Navbar() {
   }, []);
 
   // Wishlist
-  const readWishlist = () => {
-    try {
-      setWishlistCount(parseInt(localStorage.getItem("wishlistCount") || "0", 10));
-    } catch {
-      setWishlistCount(0);
-    }
-  };
-
   useEffect(() => {
-    readWishlist();
-    const onStorage = (e) => {
-      if (e.key === "wishlistCount") readWishlist();
+    const updateWishlistCount = () => {
+      try {
+        const count = parseInt(localStorage.getItem("wishlistCount") || "0", 10);
+        setWishlistCount(count);
+      } catch {
+        setWishlistCount(0);
+      }
     };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+
+    updateWishlistCount();
+
+    // ✅ Listen for wishlist updates
+    window.addEventListener("wishlistUpdated", updateWishlistCount);
+    window.addEventListener("storage", updateWishlistCount);
+    window.addEventListener("userLoggedOut", () => setWishlistCount(0));
+
+    return () => {
+      window.removeEventListener("wishlistUpdated", updateWishlistCount);
+      window.removeEventListener("storage", updateWishlistCount);
+      window.removeEventListener("userLoggedOut", () => setWishlistCount(0));
+    };
   }, []);
 
   // Cart Count
@@ -140,27 +178,27 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="sticky top-0 left-0 w-full z-50 shadow-lg">
+      <nav className={`fixed top-0 left-0 w-full z-50 shadow-lg transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}>
         {/* ===== TOP BAR - Dark Background ===== */}
-        <div className="w-full px-4 sm:px-6 md:px-10 py-3 flex items-center justify-between gap-4 bg-[#131921]">
+        <div className="w-full px-4 sm:px-6 md:px-10 py-1.5 flex items-center justify-between gap-3 bg-[#131921]">
           
           {/* Logo - Full on Mobile */}
           <Link to="/" className="flex items-center gap-2 shrink-0 hover:opacity-90 transition">
-            <img src={Logo} alt="2Wolf" className="w-10 h-10 object-contain" />
+            <img src={Logo} alt="2Wolf" className="w-13 h-11 object-contain" />
             <span className="text-2xl font-bold text-white font-[Poppins]">
-              2Wolf
+              
             </span>
           </Link>
 
-          {/* Location Button - Desktop */}
+          {/* Location Button - Desktop - COMPACT */}
           <button
             onClick={() => setIsLocationOpen(true)}
-            className="hidden lg:flex items-center gap-2 px-3 py-1 hover:bg-white/10 rounded transition"
+            className="hidden lg:flex items-center gap-1.5 px-2 py-0.5 hover:bg-white/10 rounded transition"
           >
-            <FaMapMarkerAlt className="text-white text-lg" />
-            <div className="text-left">
-              <p className="text-xs text-gray-300">Deliver to</p>
-              <p className="text-sm font-bold text-white flex items-center gap-1">
+            <FaMapMarkerAlt className="text-white text-xs" />
+            <div className="text-left leading-tight">
+              <p className="text-[10px] text-gray-300">Deliver to</p>
+              <p className="text-xs font-semibold text-white flex items-center gap-0.5">
                 {userLocation ? (
                   <>
                     {userLocation.countryName?.split(' ')[0]} {userLocation.city}
@@ -168,7 +206,7 @@ export default function Navbar() {
                 ) : (
                   "Select location"
                 )}
-                <FaChevronDown className="text-xs" />
+                <FaChevronDown className="text-[8px]" />
               </p>
             </div>
           </button>
@@ -219,17 +257,17 @@ export default function Navbar() {
             </form>
           </div>
 
-          {/* Account & Lists - Desktop */}
+          {/* Account & Lists - Desktop - AMAZON STYLE */}
           <div className="hidden lg:block relative" ref={accountRef}>
             <button
               onClick={() => setIsAccountOpen(v => !v)}
-              className="flex flex-col items-start px-2 py-1 hover:bg-white/10 rounded transition"
+              className="flex flex-col items-start px-2 py-0.5 hover:bg-white/10 rounded transition leading-tight"
             >
-              <span className="text-xs text-gray-300">
+              <span className="text-[10px] text-gray-300">
                 Hello, {user ? user.name?.split(' ')[0] : "sign in"}
               </span>
-              <span className="text-sm font-bold text-white flex items-center gap-1">
-                Account & Lists <FaChevronDown className="text-xs" />
+              <span className="text-xs font-semibold text-white flex items-center gap-0.5">
+                Account & Lists <FaChevronDown className="text-[8px]" />
               </span>
             </button>
 
@@ -294,13 +332,13 @@ export default function Navbar() {
             </AnimatePresence>
           </div>
 
-          {/* Returns & Orders - Desktop */}
+          {/* Returns & Orders - Desktop - AMAZON STYLE */}
           <Link
             to="/track-order"
-            className="hidden lg:flex flex-col items-start px-2 py-1 hover:bg-white/10 rounded transition"
+            className="hidden lg:flex flex-col items-start px-2 py-0.5 hover:bg-white/10 rounded transition leading-tight"
           >
-            <span className="text-xs text-gray-300">Returns</span>
-            <span className="text-sm font-bold text-white">& Orders</span>
+            <span className="text-[10px] text-gray-300">Returns</span>
+            <span className="text-xs font-semibold text-white">& Orders</span>
           </Link>
 
           {/* Wishlist - Desktop */}
@@ -501,7 +539,7 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Search Bar */}
-        <div className="md:hidden w-full px-4 py-2 bg-[#131921]">
+        <div className="md:hidden w-full px-4 py-1.5 bg-[#131921]">
           <form onSubmit={handleSearchSubmit} className="relative">
             <input
               type="text"
@@ -509,13 +547,13 @@ export default function Navbar() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setIsSearchOpen(true)}
-              className="w-full px-4 py-2 pr-10 rounded-lg bg-white focus:outline-none"
+              className="w-full px-3 py-1.5 pr-10 rounded-lg bg-white focus:outline-none text-sm"
             />
             <button 
               type="submit"
               className="absolute right-2 top-1/2 -translate-y-1/2 text-orange-500"
             >
-              <FaSearch />
+              <FaSearch className="text-sm" />
             </button>
 
             {/* Mobile Search Dropdown */}
@@ -532,15 +570,15 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Location Bar - Below Search - Minimized */}
-        <div className="md:hidden w-full px-3 py-0.5 bg-gradient-to-r from-[#FF8C42] to-[#FF6B35]">
+        <div className="md:hidden w-full px-3 py-1 bg-gradient-to-r from-[#FF8C42] to-[#FF6B35]">
           <button
             onClick={() => setIsLocationOpen(true)}
-            className="flex items-center gap-1.5 text-white w-full"
+            className="flex items-center gap-1 text-white w-full"
           >
-            <FaMapMarkerAlt className="text-xs" />
-            <div className="text-left">
-              <p className="text-[9px] leading-none mb-0.5">Deliver to</p>
-              <p className="text-[11px] font-semibold flex items-center gap-0.5 leading-none">
+            <FaMapMarkerAlt className="text-[10px]" />
+            <div className="text-left leading-tight">
+              <p className="text-[9px] leading-none">Deliver to</p>
+              <p className="text-[10px] font-semibold flex items-center gap-0.5 leading-none mt-0.5">
                 {userLocation ? (
                   <>
                     {userLocation.countryName?.split(' ')[0]} {userLocation.city}
@@ -555,53 +593,53 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Categories Bar */}
-        <div className="md:hidden w-full px-3 py-2 bg-white border-b border-gray-200 overflow-x-auto">
-          <div className="flex items-center gap-3 whitespace-nowrap">
+        <div className="md:hidden w-full px-3 py-1.5 bg-white border-b border-gray-200 overflow-x-auto">
+          <div className="flex items-center gap-2.5 whitespace-nowrap">
             <Link 
               to="/deals" 
-              className="text-sm font-semibold text-orange-600 hover:text-orange-700 transition flex items-center gap-1"
+              className="text-xs font-semibold text-orange-600 hover:text-orange-700 transition flex items-center gap-1"
             >
-              <FaTag className="text-xs" /> Deals
+              <FaTag className="text-[10px]" /> Deals
             </Link>
             <Link 
               to="/bestsellers" 
-              className="text-sm font-semibold text-orange-600 hover:text-orange-700 transition flex items-center gap-1"
+              className="text-xs font-semibold text-orange-600 hover:text-orange-700 transition flex items-center gap-1"
             >
-              <FaStar className="text-xs" /> Best Sellers
+              <FaStar className="text-[10px]" /> Best Sellers
             </Link>
             <Link 
               to="/new-releases" 
-              className="text-sm font-semibold text-orange-600 hover:text-orange-700 transition flex items-center gap-1"
+              className="text-xs font-semibold text-orange-600 hover:text-orange-700 transition flex items-center gap-1"
             >
-              <FaGift className="text-xs" /> New Releases
+              <FaGift className="text-[10px]" /> New Releases
             </Link>
             <button
               onClick={() => handleCategoryClick("Electronics")}
-              className="text-sm font-medium text-gray-700 hover:text-orange-600 transition"
+              className="text-xs font-medium text-gray-700 hover:text-orange-600 transition"
             >
               Electronics
             </button>
             <button
               onClick={() => handleCategoryClick("Fashion")}
-              className="text-sm font-medium text-gray-700 hover:text-orange-600 transition"
+              className="text-xs font-medium text-gray-700 hover:text-orange-600 transition"
             >
               Fashion
             </button>
             <button
               onClick={() => handleCategoryClick("Home & Kitchen")}
-              className="text-sm font-medium text-gray-700 hover:text-orange-600 transition"
+              className="text-xs font-medium text-gray-700 hover:text-orange-600 transition"
             >
               Home & Kitchen
             </button>
             <button
               onClick={() => handleCategoryClick("Beauty & Personal Care")}
-              className="text-sm font-medium text-gray-700 hover:text-orange-600 transition"
+              className="text-xs font-medium text-gray-700 hover:text-orange-600 transition"
             >
               Beauty
             </button>
             <button
               onClick={() => handleCategoryClick("Sports & Outdoors")}
-              className="text-sm font-medium text-gray-700 hover:text-orange-600 transition"
+              className="text-xs font-medium text-gray-700 hover:text-orange-600 transition"
             >
               Sports
             </button>

@@ -1,4 +1,4 @@
-// src/pages/AllCategories.jsx
+// src/pages/AllCategories.jsx - FIXED
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { FaStar, FaFilter, FaTimes } from "react-icons/fa";
@@ -27,7 +27,8 @@ export default function AllCategories() {
     inStock: true
   });
 
-  const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:5000';
+  // ✅ FIXED: Use correct environment variable
+  const API_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
 
   // Detect category type for dynamic filters
   const getCategoryType = () => {
@@ -57,14 +58,20 @@ export default function AllCategories() {
   const fetchProducts = async () => {
     try {
       setLoading(true);
+      console.log("🔍 Fetching from:", `${API_URL}/api/products`);
       const response = await fetch(`${API_URL}/api/products`);
       const data = await response.json();
       
+      console.log("📦 Response:", data);
+      
       if (data.success && data.products) {
+        console.log("✅ Products loaded:", data.products.length);
         setProducts(data.products);
+      } else {
+        console.log("⚠️ No products in response");
       }
     } catch (error) {
-      console.error("Error fetching products:", error);
+      console.error("❌ Error fetching products:", error);
     } finally {
       setLoading(false);
     }

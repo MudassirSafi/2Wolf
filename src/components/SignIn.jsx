@@ -1,4 +1,6 @@
-// ✅ src/components/SignIn.jsx - Mobile First, No Apple
+// ==========================================
+// 📁 FILE 2: src/components/SignIn.jsx - FIXED
+// ==========================================
 import React, { useState, useContext } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
@@ -15,7 +17,7 @@ export default function SignIn({ onClose }) {
   const nav = useNavigate();
   const { login } = useContext(AuthContext);
 
-  const API = import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:5000';
+  const API = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || 'http://localhost:5000';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,13 +25,25 @@ export default function SignIn({ onClose }) {
     setLoading(true);
 
     try {
+      console.log('🔍 Attempting login to:', `${API}/api/users/signin`);
+      console.log('📧 Email:', email.trim().toLowerCase());
+      
       const res = await axios.post(`${API}/api/users/signin`, { 
         email: email.trim().toLowerCase(), 
         password 
       });
       
-      const { token, role } = res.data;
-      login(token, role);
+      console.log('✅ Login response:', res.data);
+      
+      // ✅ FIXED: Extract user data from response
+      const { token, role, name, email: userEmail, _id } = res.data;
+      
+      // ✅ FIXED: Pass user data to login function
+      login(token, role, {
+        name: name || res.data.user?.name || "User",
+        email: userEmail || res.data.user?.email || email,
+        id: _id || res.data.user?._id
+      });
       
       if (onClose) onClose();
       
@@ -39,6 +53,7 @@ export default function SignIn({ onClose }) {
         nav('/');
       }
     } catch (error) {
+      console.error('❌ Login error:', error);
       setErr(error?.response?.data?.message || 'Sign in failed');
     } finally {
       setLoading(false);
@@ -56,13 +71,11 @@ export default function SignIn({ onClose }) {
 
   return (
     <>
-      {/* BLUR BACKGROUND */}
       <div 
         className="fixed inset-0 z-40 bg-black/40 backdrop-blur-md"
         onClick={onClose}
       />
 
-      {/* MODAL - Mobile First Responsive */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 pointer-events-none overflow-y-auto">
         <form
           onSubmit={handleSubmit}
@@ -71,7 +84,6 @@ export default function SignIn({ onClose }) {
                      shadow-2xl text-gray-900 relative pointer-events-auto my-4 mx-auto"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Close Button */}
           <button
             type="button"
             onClick={onClose}
@@ -94,7 +106,6 @@ export default function SignIn({ onClose }) {
             </div>
           )}
 
-          {/* Email Input */}
           <input
             type="email"
             value={email}
@@ -110,7 +121,6 @@ export default function SignIn({ onClose }) {
                        disabled:opacity-50 disabled:cursor-not-allowed"
           />
 
-          {/* Password Input with Show/Hide */}
           <div className="relative mb-2 sm:mb-3">
             <input
               type={showPassword ? "text" : "password"}
@@ -137,7 +147,6 @@ export default function SignIn({ onClose }) {
             </button>
           </div>
 
-          {/* Forgot Password Link */}
           <div className="text-right mb-4 sm:mb-6 md:mb-8">
             <button
               type="button"
@@ -149,7 +158,6 @@ export default function SignIn({ onClose }) {
             </button>
           </div>
 
-          {/* Submit Button */}
           <button 
             type="submit" 
             disabled={loading}
@@ -164,14 +172,12 @@ export default function SignIn({ onClose }) {
             {loading ? 'Signing In...' : 'Sign In'}
           </button>
 
-          {/* Divider */}
           <div className="flex items-center my-4 sm:my-6">
             <div className="flex-1 border-t border-gray-300"></div>
             <span className="px-3 sm:px-4 text-xs sm:text-sm text-gray-500">OR</span>
             <div className="flex-1 border-t border-gray-300"></div>
           </div>
 
-          {/* Google OAuth Button */}
           <button 
             type="button" 
             onClick={handleGoogle}
