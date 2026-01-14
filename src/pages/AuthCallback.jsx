@@ -1,6 +1,7 @@
 // ==========================================
 // 📁 FILE 2: src/pages/AuthCallback.jsx - FIXED (FASTER)
 // ==========================================
+import react from 'react';
 import { useEffect, useContext } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
